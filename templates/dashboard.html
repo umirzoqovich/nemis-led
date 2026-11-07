@@ -558,11 +558,20 @@
         }
 
         async function updateStatus(leadId, newStatus) {
+            let payload = { status: newStatus, assigned_to: 'Web Admin' };
+            if (newStatus === 'TRIAL_SCHEDULED') {
+                const dt = prompt("Sinov darsi kuni va vaqtini kiriting (masalan: 12-noyabr 18:30):");
+                if (dt) payload.trial_date = dt;
+            } else if (newStatus === 'CANCELLED') {
+                const reason = prompt("Rad etish sababini kiriting (Masalan: Qimmat, Vaqt to'g'ri kelmadi, Online qidiryapti):");
+                if (reason) payload.cancel_reason = reason;
+            }
+
             try {
                 const res = await fetch(`/api/leads/${leadId}/status`, {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ status: newStatus, assigned_to: 'Web Admin' })
+                    body: JSON.stringify(payload)
                 });
                 if (res.ok) {
                     location.reload();
