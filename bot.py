@@ -3,6 +3,7 @@ from typing import Dict, Any, Optional
 from aiogram import Bot, Dispatcher, types, F
 from aiogram.filters import Command
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.client.session.aiohttp import AiohttpSession
 from config import settings
 import database
 
@@ -31,7 +32,8 @@ bot: Optional[Bot] = None
 dp: Optional[Dispatcher] = None
 
 if settings.BOT_TOKEN:
-    bot = Bot(token=settings.BOT_TOKEN)
+    session = AiohttpSession(proxy=settings.TELEGRAM_PROXY) if settings.TELEGRAM_PROXY else None
+    bot = Bot(token=settings.BOT_TOKEN, session=session)
     dp = Dispatcher()
 
 def get_status_label(status: str) -> str:

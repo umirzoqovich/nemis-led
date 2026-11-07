@@ -5,6 +5,7 @@ from typing import Optional
 class Settings(BaseSettings):
     BOT_TOKEN: Optional[str] = ""
     TELEGRAM_GROUP_ID: Optional[str] = ""
+    TELEGRAM_PROXY: Optional[str] = ""
     META_VERIFY_TOKEN: str = "lead_verify_secret_token_2026"
     META_PAGE_ACCESS_TOKEN: Optional[str] = ""
     DATABASE_URL: str = "sqlite:///./crm_leads.db"
