@@ -1,0 +1,10 @@
+services:
+  crm:
+    build: .
+    container_name: nemis_crm
+    restart: always
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./crm_leads.db:/app/crm_leads.db
+      - ./.env:/app/.env

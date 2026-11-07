@@ -53,11 +53,26 @@ META_VERIFY_TOKEN=lead_verify_secret_token_2026
 > Guruhga botni qo'shing va `/id` buyrug'ini yuboring. Bot guruh ID sini chiqarib beradi.
 
 ### 2. Tizimni ishga tushirish
-Windowsda `run.bat` fayliga 2 marta bosing yoki terminalda:
 
+#### A) Windows kompyuterda:
+`run.bat` fayliga 2 marta bosing yoki terminalda:
 ```powershell
-.\.venv\Scripts\activate
-python run.py
+.\.venv\Scripts\python.exe run.py
+```
+
+#### B) Linux / Ubuntu Serverda (VPS):
+```bash
+git clone https://github.com/umirzoqovich/nemis-led.git
+cd nemis-led
+cp .env.example .env
+nano .env  # Bot token va guruh ID sini yozasiz
+
+# Ishga tushirish (1 ta buyruq):
+chmod +x run.sh
+./run.sh
+
+# Yoki Docker orqali (24/7 orqa fonda):
+docker compose up -d --build
 ```
 
 - **Web CRM:** [http://localhost:8000](http://localhost:8000)
