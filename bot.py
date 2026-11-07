@@ -110,13 +110,15 @@ if dp:
         user_name = message.from_user.full_name
         text = (
             f"Assalomu alaykum, {user_name}!\n\n"
-            f"🤖 <b>O'quv markaz Target CRM Botiga xush kelibsiz!</b>\n\n"
-            f"Ushbu bot Facebook va Instagram target reklamalaridan kelgan har bir lidni "
+            f"🇩🇪 <b>DeutschZentrum — Nemis Tili Target CRM Boti!</b>\n\n"
+            f"Ushbu bot Instagram va Facebook target reklamalaridan kelgan har bir lidni "
             f"darhol ushbu guruhga yetkazadi.\n\n"
             f"📌 <b>Mavjud buyruqlar:</b>\n"
-            f"• /stats — Lidlar va konversiya statistikasi\n"
-            f"• /leads — Oxirgi kelgan lidlar ro'yxati\n"
-            f"• /id — Ushbu guruh yoki profilingiz ID sini bilish\n"
+            f"• /stats — Umumiy statistika va eng ko'p tanlangan yo'nalishlar\n"
+            f"• /bugun — Bugungi kelgan lidlar hisoboti\n"
+            f"• /find &lt;ism yoki tel&gt; — O'quvchini tezkor qidirish (Masalan: <code>/find Sardor</code>)\n"
+            f"• /leads — Oxirgi kelgan 10 ta lid\n"
+            f"• /id — Ushbu guruhning Chat ID sini bilish\n"
         )
         await message.answer(text, parse_mode="HTML")
 
@@ -134,8 +136,14 @@ if dp:
     @dp.message(Command("stats"))
     async def cmd_stats(message: types.Message):
         stats = database.get_lead_stats()
+        
+        # Course breakdown text
+        courses_text = ""
+        for c_name, count in stats.get("by_course", {}).items():
+            courses_text += f"   • {c_name}: <b>{count} ta</b>\n"
+
         text = (
-            f"📊 <b>TARGET LIDLARI STATISTIKASI</b>\n"
+            f"📊 <b>NEMIS TILI LIDLARI STATISTIKASI</b>\n"
             f"━━━━━━━━━━━━━━━━━━━━\n"
             f"📥 <b>Jami kelgan lidlar:</b> {stats['total']} ta\n"
             f"⚡ <b>Bugun tushgan:</b> {stats['today']} ta\n"
@@ -146,8 +154,64 @@ if dp:
             f"✅ <b>To'lov qilganlar:</b> {stats['paid']} ta\n"
             f"❌ <b>Rad etganlar:</b> {stats['cancelled']} ta\n"
             f"━━━━━━━━━━━━━━━━━━━━\n"
-            f"🏆 <b>Sotuv konversiyasi:</b> <b>{stats['conversion']}%</b>\n"
+            f"🏆 <b>Sotuv konversiyasi:</b> <b>{stats['conversion']}%</b>\n\n"
+            f"🎯 <b>Eng ommabop yo'nalishlar:</b>\n"
+            f"{courses_text or '   (Hozircha ma''lumot yo''q)'}"
         )
+        await message.answer(text, parse_mode="HTML")
+
+    @dp.message(Command("today"))
+    @dp.message(Command("bugun"))
+    async def cmd_today(message: types.Message):
+        stats = database.get_lead_stats()
+        all_leads = database.get_all_leads(limit=50)
+        from datetime import datetime
+        today_str = datetime.now().strftime("%Y-%m-%d")
+        today_leads = [l for l in all_leads if l.get("created_at", "").startswith(today_str)]
+
+        if not today_leads:
+            await message.answer(f"📅 Bugun ({today_str}) hali yangi lidlar tushmadi.")
+            return
+
+        text = f"⚡ <b>Bugungi lidlar hisoboti ({len(today_leads)} ta):</b>\n\n"
+        for l in today_leads:
+            icon = STATUS_ICONS.get(l['status'], "⚪")
+            text += f"{icon} <b>#{l['id']} {l['full_name']}</b>\n"
+            text += f"   📞 {l['phone']} | {l.get('course') or 'Nemis tili'}\n"
+            text += f"   Status: {get_status_label(l['status'])}\n\n"
+
+        await message.answer(text, parse_mode="HTML")
+
+    @dp.message(Command("find"))
+    @dp.message(Command("qidiruv"))
+    async def cmd_find(message: types.Message):
+        args = message.text.split(maxsplit=1)
+        if len(args) < 2:
+            await message.answer("⚠️ Iltimos, qidirish uchun ism yoki telefon raqamini yozing.\nMisol: <code>/find Sardor</code> yoki <code>/find 90123</code>", parse_mode="HTML")
+            return
+
+        query = args[1].strip()
+        results = database.get_all_leads(search=query, limit=5)
+
+        if not results:
+            await message.answer(f"🔍 '<b>{query}</b>' bo'yicha hech qanday lid topilmadi.", parse_mode="HTML")
+            return
+
+        text = f"🔍 <b>Qidiruv natijalari ('{query}'):</b>\n\n"
+        for l in results:
+            text += (
+                f"👤 <b>#{l['id']} {l['full_name']}</b>\n"
+                f"📞 <code>{l['phone']}</code> | {l.get('course') or 'Nemis tili'}\n"
+                f"📊 Status: {get_status_label(l['status'])}\n"
+            )
+            if l.get("assigned_to"):
+                text += f"👨‍💼 Kurator: {l['assigned_to']}\n"
+            if l.get("trial_date"):
+                text += f"📅 Sinov darsi: {l['trial_date']}\n"
+            if l.get("notes"):
+                text += f"📝 Izoh: {l['notes']}\n"
+            text += "━━━━━━━━━━━━━━━━━━━━\n"
+
         await message.answer(text, parse_mode="HTML")
 
     @dp.message(Command("leads"))
