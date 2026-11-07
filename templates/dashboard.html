@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>O'quv Markaz — Target Lead CRM</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .kanban-col {
+            min-height: 550px;
+        }
+        .lead-card {
+            transition: all 0.2s ease;
+        }
+        .lead-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans min-h-screen">
+
+    <!-- Toast Notification Container -->
+    <div id="toastContainer" class="fixed top-20 right-6 z-50 flex flex-col space-y-3 pointer-events-none"></div>
+
+    <!-- Top Navigation Bar -->
+    <header class="bg-indigo-700 text-white shadow-lg sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <div class="bg-white/20 p-2.5 rounded-xl">
+                    <i class="fa-solid fa-bullseye text-2xl text-yellow-300"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight flex items-center space-x-1.5">
+                        <span>🇩🇪 DeutschZentrum CRM</span>
+                    </h1>
+                    <p class="text-xs text-indigo-200">Nemis Tili (Ausbildung, B1/B2, Ish va O'qish) Target Menejeri</p>
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-2 sm:space-x-3">
+                <button onclick="sendQuickTestLead()" class="bg-amber-400 hover:bg-amber-300 text-slate-950 px-3 py-2 rounded-lg text-xs sm:text-sm font-extrabold flex items-center shadow transition active:scale-95">
+                    <i class="fa-solid fa-bolt mr-1.5 text-slate-900"></i> Test Lid
+                </button>
+                <a href="/export/excel" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-2 rounded-lg text-xs sm:text-sm font-medium flex items-center shadow transition">
+                    <i class="fa-solid fa-file-excel mr-1.5"></i> Excelga
+                </a>
+                <button onclick="openModal()" class="bg-white hover:bg-slate-100 text-indigo-700 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold flex items-center shadow transition">
+                    <i class="fa-solid fa-plus mr-1"></i> Yangi
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+        <!-- 🎯 TARGET LINK GENERATOR (MAIN HERO SECTION) -->
+        <div class="bg-gradient-to-r from-slate-900 via-indigo-950 to-indigo-900 text-white p-5 rounded-2xl shadow-xl border border-indigo-700/40 mb-6">
+            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                <div>
+                    <div class="flex items-center space-x-2">
+                        <span class="bg-amber-400 text-slate-900 text-[11px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wide">
+                            🎯 Target Reklama Uchun Havola
+                        </span>
+                        <span class="text-xs text-indigo-300">Instagram "Batafsil" tugmasiga qo'yiladi</span>
+                    </div>
+                    <h2 class="text-lg font-bold mt-1.5">Lid Yig'uvchi Forma Havolasini Olish</h2>
+                    <p class="text-xs text-indigo-200 mt-0.5">Ushbu havolani nusxalab olib, Instagram target reklamangizga qo'ying. Foydalanuvchi ma'lumot qoldirishi bilan darhol guruhga xabar boradi.</p>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-2">
+                    <select id="genCourse" onchange="updateGeneratedLink()" class="bg-indigo-900/80 border border-indigo-500 text-white text-xs rounded-xl px-3 py-2.5 focus:outline-none">
+                        <option value="">Barcha nemis tili yo'nalishlari</option>
+                        <option value="Ausbildung">🚀 Ausbildung (B1/B2)</option>
+                        <option value="A1">🇩🇪 Nemis A1 (Noldan)</option>
+                        <option value="B1">🇩🇪 Nemis B1 (Davom)</option>
+                        <option value="B2">🎓 Nemis B2 (Universitet/Ish)</option>
+                        <option value="Med">🩺 Meditsina nemis tili</option>
+                        <option value="VisaA1">💍 A1 Viza (Oila birlashtirish)</option>
+                        <option value="Goethe">📜 Goethe / ÖSD</option>
+                    </select>
+
+                    <input type="text" id="genRef" oninput="updateGeneratedLink()" placeholder="Kampaniya (masalan: Story_Ausbildung)" value="Instagram_Ausbildung" 
+                        class="bg-indigo-900/80 border border-indigo-500 text-white text-xs rounded-xl px-3 py-2.5 focus:outline-none placeholder-indigo-300 w-44">
+
+                    <button onclick="copyGeneratedLink()" class="bg-amber-400 hover:bg-amber-300 text-slate-900 font-extrabold px-4 py-2.5 rounded-xl text-xs flex items-center shadow-lg transition active:scale-95">
+                        <i class="fa-solid fa-copy mr-1.5"></i> Nusxalash
+                    </button>
+
+                    <a id="testFormLink" href="/form" target="_blank" class="bg-white/10 hover:bg-white/20 text-white px-3.5 py-2.5 rounded-xl text-xs font-semibold flex items-center transition border border-white/20">
+                        <i class="fa-solid fa-arrow-up-right-from-square mr-1.5"></i> Ochib ko'rish
+                    </a>
+                </div>
+            </div>
+
+            <!-- Active URL display bar -->
+            <div class="mt-3.5 bg-black/40 rounded-xl p-3 flex items-center justify-between font-mono text-xs text-indigo-100 border border-white/10">
+                <div class="flex items-center space-x-2 truncate">
+                    <i class="fa-solid fa-link text-indigo-400 text-sm"></i>
+                    <span id="displayUrl" class="truncate select-all">Yuklanmoqda...</span>
+                </div>
+                <span id="copiedBadge" class="hidden text-xs text-amber-300 font-bold ml-3 shrink-0">Nusxalandi! ✅</span>
+            </div>
+        </div>
+
+        <!-- Metrics / KPI Cards -->
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-semibold text-slate-500 uppercase">Jami lidlar</p>
+                    <p class="text-2xl font-bold text-slate-800 mt-1">{{ stats.total }}</p>
+                </div>
+                <div class="w-10 h-10 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600">
+                    <i class="fa-solid fa-users text-lg"></i>
+                </div>
+            </div>
+
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-semibold text-slate-500 uppercase">Bugun kelgan</p>
+                    <p class="text-2xl font-bold text-blue-600 mt-1">{{ stats.today }}</p>
+                </div>
+                <div class="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600">
+                    <i class="fa-solid fa-bolt text-lg"></i>
+                </div>
+            </div>
+
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-semibold text-slate-500 uppercase">Sinov darsida</p>
+                    <p class="text-2xl font-bold text-purple-600 mt-1">{{ stats.trial }}</p>
+                </div>
+                <div class="w-10 h-10 rounded-lg bg-purple-50 flex items-center justify-center text-purple-600">
+                    <i class="fa-solid fa-calendar-check text-lg"></i>
+                </div>
+            </div>
+
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-semibold text-slate-500 uppercase">To'lov qildi</p>
+                    <p class="text-2xl font-bold text-emerald-600 mt-1">{{ stats.paid }}</p>
+                </div>
+                <div class="w-10 h-10 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600">
+                    <i class="fa-solid fa-badge-check text-lg"></i>
+                </div>
+            </div>
+
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between col-span-2 md:col-span-1">
+                <div>
+                    <p class="text-xs font-semibold text-slate-500 uppercase">Konversiya</p>
+                    <p class="text-2xl font-bold text-amber-500 mt-1">{{ stats.conversion }}%</p>
+                </div>
+                <div class="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center text-amber-500">
+                    <i class="fa-solid fa-chart-line text-lg"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter and Search Bar -->
+        <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 mb-6 flex flex-col md:flex-row gap-3 justify-between items-center">
+            <form method="GET" action="/" class="w-full md:w-1/2 flex gap-2">
+                <div class="relative w-full">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-3.5 text-slate-400"></i>
+                    <input type="text" name="search" value="{{ search or '' }}" placeholder="Ism, telefon raqami yoki kurs bo'yicha qidirish..." class="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <button type="submit" class="bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition">
+                    Qidirish
+                </button>
+                {% if search %}
+                    <a href="/" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-3 py-2 rounded-lg text-sm font-medium flex items-center">
+                        Tozalash
+                    </a>
+                {% endif %}
+            </form>
+
+            <div class="flex items-center space-x-3 text-xs text-slate-500">
+                <span class="inline-flex items-center">
+                    <span class="w-2 h-2 mr-1.5 bg-emerald-500 rounded-full animate-ping"></span>
+                    Jonli aloqa (SSE) faol
+                </span>
+                <span>•</span>
+                <span>Telegram Bot:</span>
+                {% if bot_active %}
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        Faol
+                    </span>
+                {% else %}
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                        .env da Token kutilmoqda
+                    </span>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Kanban Board: 5 Columns -->
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+
+            <!-- Column 1: Yangi Lidlar -->
+            <div class="bg-slate-200/70 p-3 rounded-xl kanban-col flex flex-col">
+                <div class="flex items-center justify-between mb-3 px-1">
+                    <h3 class="font-bold text-slate-700 text-sm flex items-center">
+                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 mr-2"></span>
+                        Yangi lidlar
+                    </h3>
+                    <span class="text-xs bg-slate-300 text-slate-700 px-2 py-0.5 rounded-full font-semibold">{{ leads_by_status['NEW']|length }}</span>
+                </div>
+                <div id="col_NEW" class="space-y-3 overflow-y-auto flex-1">
+                    {% for lead in leads_by_status['NEW'] %}
+                        {% include 'lead_card.html' %}
+                    {% else %}
+                        <p class="text-xs text-slate-400 text-center py-8">Yangi lidlar yo'q</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Column 2: Bog'lanildi -->
+            <div class="bg-slate-200/70 p-3 rounded-xl kanban-col flex flex-col">
+                <div class="flex items-center justify-between mb-3 px-1">
+                    <h3 class="font-bold text-slate-700 text-sm flex items-center">
+                        <span class="w-2.5 h-2.5 rounded-full bg-amber-500 mr-2"></span>
+                        Bog'lanildi
+                    </h3>
+                    <span class="text-xs bg-slate-300 text-slate-700 px-2 py-0.5 rounded-full font-semibold">{{ leads_by_status['CONTACTED']|length }}</span>
+                </div>
+                <div id="col_CONTACTED" class="space-y-3 overflow-y-auto flex-1">
+                    {% for lead in leads_by_status['CONTACTED'] %}
+                        {% include 'lead_card.html' %}
+                    {% else %}
+                        <p class="text-xs text-slate-400 text-center py-8">Hozircha bo'sh</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Column 3: Sinov darsi -->
+            <div class="bg-slate-200/70 p-3 rounded-xl kanban-col flex flex-col">
+                <div class="flex items-center justify-between mb-3 px-1">
+                    <h3 class="font-bold text-slate-700 text-sm flex items-center">
+                        <span class="w-2.5 h-2.5 rounded-full bg-purple-500 mr-2"></span>
+                        Sinov darsida
+                    </h3>
+                    <span class="text-xs bg-slate-300 text-slate-700 px-2 py-0.5 rounded-full font-semibold">{{ leads_by_status['TRIAL_SCHEDULED']|length }}</span>
+                </div>
+                <div id="col_TRIAL_SCHEDULED" class="space-y-3 overflow-y-auto flex-1">
+                    {% for lead in leads_by_status['TRIAL_SCHEDULED'] %}
+                        {% include 'lead_card.html' %}
+                    {% else %}
+                        <p class="text-xs text-slate-400 text-center py-8">Hozircha bo'sh</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Column 4: To'lov qildi -->
+            <div class="bg-slate-200/70 p-3 rounded-xl kanban-col flex flex-col">
+                <div class="flex items-center justify-between mb-3 px-1">
+                    <h3 class="font-bold text-slate-700 text-sm flex items-center">
+                        <span class="w-2.5 h-2.5 rounded-full bg-blue-600 mr-2"></span>
+                        To'lov qildi
+                    </h3>
+                    <span class="text-xs bg-slate-300 text-slate-700 px-2 py-0.5 rounded-full font-semibold">{{ leads_by_status['PAID']|length }}</span>
+                </div>
+                <div id="col_PAID" class="space-y-3 overflow-y-auto flex-1">
+                    {% for lead in leads_by_status['PAID'] %}
+                        {% include 'lead_card.html' %}
+                    {% else %}
+                        <p class="text-xs text-slate-400 text-center py-8">Hozircha bo'sh</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Column 5: Rad etdi -->
+            <div class="bg-slate-200/70 p-3 rounded-xl kanban-col flex flex-col">
+                <div class="flex items-center justify-between mb-3 px-1">
+                    <h3 class="font-bold text-slate-700 text-sm flex items-center">
+                        <span class="w-2.5 h-2.5 rounded-full bg-rose-500 mr-2"></span>
+                        Rad etdi
+                    </h3>
+                    <span class="text-xs bg-slate-300 text-slate-700 px-2 py-0.5 rounded-full font-semibold">{{ leads_by_status['CANCELLED']|length }}</span>
+                </div>
+                <div id="col_CANCELLED" class="space-y-3 overflow-y-auto flex-1">
+                    {% for lead in leads_by_status['CANCELLED'] %}
+                        {% include 'lead_card.html' %}
+                    {% else %}
+                        <p class="text-xs text-slate-400 text-center py-8">Hozircha bo'sh</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Modal: Add New Lead -->
+    <div id="leadModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl relative">
+            <button onclick="closeModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
+                <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
+            <h2 class="text-lg font-bold text-slate-800 mb-1">Yangi lid qo'shish</h2>
+            <p class="text-xs text-slate-500 mb-4">Target yoki telefon orqali kelgan yangi o'quvchi ma'lumotlari</p>
+
+            <form id="createLeadForm" onsubmit="submitNewLead(event)" class="space-y-3.5">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">F.I.SH (Ism familiya) *</label>
+                    <input type="text" id="lead_name" required placeholder="Masalan: Sardor Rahimov" class="w-full px-3.5 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Telefon raqam *</label>
+                    <input type="tel" id="lead_phone" required placeholder="+998 90 123 45 67" class="w-full px-3.5 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Qaysi kursga?</label>
+                    <input type="text" id="lead_course" placeholder="Ingliz tili (IELTS), Matematika, IT..." class="w-full px-3.5 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Manba</label>
+                        <select id="lead_source" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                            <option value="Instagram Target">Instagram Target</option>
+                            <option value="Facebook Ads">Facebook Ads</option>
+                            <option value="Telegram">Telegram</option>
+                            <option value="Tavsiya (Sarafan)">Tavsiya</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Kampaniya nomi</label>
+                        <input type="text" id="lead_ad_name" placeholder="Target_Noyabr_Story" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Izoh / Eslatma</label>
+                    <textarea id="lead_notes" rows="2" placeholder="Masalan: Kechki guruhga qiziqyapti..." class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"></textarea>
+                </div>
+
+                <div class="pt-2 flex justify-end space-x-2">
+                    <button type="button" onclick="closeModal()" class="px-4 py-2 border border-slate-200 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50">Bekor qilish</button>
+                    <button type="submit" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-semibold shadow">Saqlash va Yuborish</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Lead Detail & Timeline -->
+    <div id="leadDetailModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl relative max-h-[90vh] flex flex-col">
+            <button onclick="closeLeadDetailModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
+                <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
+            <div id="detailHeader" class="mb-4">
+                <h2 id="detailName" class="text-xl font-extrabold text-slate-800">Yuklanmoqda...</h2>
+                <p id="detailPhone" class="text-sm text-emerald-600 font-semibold"></p>
+                <div class="flex items-center space-x-2 mt-1">
+                    <span id="detailCourse" class="text-xs bg-indigo-50 text-indigo-700 px-2.5 py-0.5 rounded-full font-bold"></span>
+                    <span id="detailSource" class="text-xs text-slate-400"></span>
+                </div>
+            </div>
+
+            <!-- Timeline history -->
+            <div class="flex-1 overflow-y-auto mb-4 border-t border-b border-slate-100 py-3 space-y-3">
+                <h4 class="text-xs font-bold text-slate-500 uppercase">Harakatlar tarixi va Izohlar:</h4>
+                <div id="detailTimeline" class="space-y-2 text-xs">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+
+            <!-- Add note form -->
+            <form id="addNoteForm" onsubmit="submitNote(event)" class="flex gap-2">
+                <input type="hidden" id="detailLeadId">
+                <input type="text" id="newNoteText" required placeholder="Yangi izoh yozish..." class="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-xs font-bold transition">Qo'shish</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- JavaScript logic -->
+    <script>
+        async function sendQuickTestLead() {
+            const germanLeads = [
+                { name: "Sardorbek Rahimov", course: "Ausbildung (Germaniya)", note: "Daraja: Noldan | Format: Markazda (Offline) | Maqsad: Germaniyada IT kasb-hunar" },
+                { name: "Mohira Ergasheva", course: "Shifokor va Hamshiralar (Meditsina)", note: "Daraja: A1 boshlaganman | Format: Online (Zoom) | Maqsad: Germaniyada hamshiralik" },
+                { name: "Doniyor Qosimov", course: "Nemis tili B2 (Universitet/Ish)", note: "Daraja: B1 o'rganganman | Format: Markazda (Offline) | Maqsad: Magistratura" },
+                { name: "Nilufar Karimova", course: "A1 Viza (Oila birlashtirish)", note: "Daraja: Noldan | Format: Online (Zoom) | Maqsad: Turmush o'rtog'i Germaniyada" },
+                { name: "Bekzod Aliyev", course: "Nemis tili A1 (Noldan)", note: "Daraja: Noldan | Format: Markazda (Offline) | Maqsad: Umumiy nemis tili" }
+            ];
+            const randomItem = germanLeads[Math.floor(Math.random() * germanLeads.length)];
+            const randomDigits = Math.floor(1000000 + Math.random() * 9000000);
+
+            const payload = {
+                full_name: randomItem.name,
+                phone: "+998 90 " + randomDigits,
+                course: randomItem.course,
+                source: "Instagram Reels Target (Nemis tili)",
+                ad_name: "Ausbildung_Kuz_Kampaniya_01",
+                notes: randomItem.note
+            };
+
+            await fetch('/api/leads', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+        }
+
+        function updateGeneratedLink() {
+            const course = document.getElementById('genCourse').value;
+            const ref = document.getElementById('genRef').value.trim() || 'Instagram_Target';
+            const baseUrl = window.location.origin + '/form';
+            let fullUrl = baseUrl + '?ref=' + encodeURIComponent(ref);
+            if (course) {
+                fullUrl += '&course=' + encodeURIComponent(course);
+            }
+            document.getElementById('displayUrl').textContent = fullUrl;
+            document.getElementById('testFormLink').href = fullUrl;
+        }
+
+        function copyGeneratedLink() {
+            const url = document.getElementById('displayUrl').textContent;
+            navigator.clipboard.writeText(url).then(() => {
+                const badge = document.getElementById('copiedBadge');
+                badge.classList.remove('hidden');
+                setTimeout(() => badge.classList.add('hidden'), 2500);
+            });
+        }
+
+        // Web Audio synthesized gentle notification chime
+        function playChime() {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = "sine";
+                osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
+                osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.15); // A5
+                gain.gain.setValueAtTime(0.2, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.5);
+            } catch (e) {
+                console.log("Audio play error", e);
+            }
+        }
+
+        function showToast(lead) {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = 'pointer-events-auto bg-slate-900 text-white p-4 rounded-2xl shadow-2xl border border-indigo-500/50 flex items-center space-x-3 transition transform duration-300 translate-y-2 opacity-0 max-w-sm';
+            toast.innerHTML = `
+                <div class="w-10 h-10 rounded-xl bg-amber-400 text-slate-950 flex items-center justify-center shrink-0 font-bold text-lg">
+                    <i class="fa-solid fa-bullseye"></i>
+                </div>
+                <div class="flex-1">
+                    <p class="text-xs font-bold text-amber-300 uppercase">Yangi Target Lidi!</p>
+                    <p class="text-sm font-extrabold text-white">${lead.full_name}</p>
+                    <p class="text-xs text-slate-300">${lead.phone} • ${lead.course || 'Umumiy'}</p>
+                </div>
+            `;
+            container.appendChild(toast);
+            requestAnimationFrame(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            });
+            setTimeout(() => {
+                toast.classList.add('opacity-0');
+                setTimeout(() => toast.remove(), 400);
+            }, 6000);
+        }
+
+        // Live Server-Sent Events (SSE) listener
+        function setupLiveEvents() {
+            const source = new EventSource('/api/events');
+            source.onmessage = function(event) {
+                try {
+                    const payload = JSON.parse(event.data);
+                    if (payload.type === 'NEW_LEAD') {
+                        playChime();
+                        showToast(payload.data);
+                        setTimeout(() => location.reload(), 1500);
+                    } else if (payload.type === 'STATUS_UPDATED') {
+                        setTimeout(() => location.reload(), 800);
+                    }
+                } catch(e) {}
+            };
+        }
+
+        function openModal() {
+            document.getElementById('leadModal').classList.remove('hidden');
+        }
+        function closeModal() {
+            document.getElementById('leadModal').classList.add('hidden');
+        }
+
+        async function openLeadDetailModal(leadId) {
+            document.getElementById('detailLeadId').value = leadId;
+            document.getElementById('leadDetailModal').classList.remove('hidden');
+            try {
+                const res = await fetch(`/api/leads/${leadId}`);
+                const lead = await res.json();
+                document.getElementById('detailName').textContent = lead.full_name;
+                document.getElementById('detailPhone').textContent = lead.phone;
+                document.getElementById('detailCourse').textContent = lead.course || 'Umumiy';
+                document.getElementById('detailSource').textContent = `${lead.source} (${lead.ad_name || 'Target'})`;
+
+                const timeRes = await fetch(`/api/leads/${leadId}/timeline`);
+                const timeline = await timeRes.json();
+                const timelineDiv = document.getElementById('detailTimeline');
+                timelineDiv.innerHTML = '';
+                if (timeline.length === 0) {
+                    timelineDiv.innerHTML = '<p class="text-slate-400">Hozircha izohlar mavjud emas.</p>';
+                } else {
+                    timeline.forEach(item => {
+                        const row = document.createElement('div');
+                        row.className = 'p-2 bg-slate-50 border border-slate-200 rounded-lg';
+                        row.innerHTML = `
+                            <div class="flex justify-between text-[10px] text-slate-400 mb-0.5">
+                                <span class="font-bold text-slate-600">${item.changed_by || 'Admin'}</span>
+                                <span>${item.created_at}</span>
+                            </div>
+                            <p class="text-slate-700">${item.note || (item.new_status ? 'Status: ' + item.new_status : '')}</p>
+                        `;
+                        timelineDiv.appendChild(row);
+                    });
+                }
+            } catch(e) {
+                console.error(e);
+            }
+        }
+
+        function closeLeadDetailModal() {
+            document.getElementById('leadDetailModal').classList.add('hidden');
+        }
+
+        async function submitNote(e) {
+            e.preventDefault();
+            const leadId = document.getElementById('detailLeadId').value;
+            const noteText = document.getElementById('newNoteText').value.trim();
+            if (!noteText) return;
+
+            try {
+                const res = await fetch(`/api/leads/${leadId}/notes`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ note: noteText, author: 'Admin' })
+                });
+                if (res.ok) {
+                    document.getElementById('newNoteText').value = '';
+                    openLeadDetailModal(leadId); // Refresh timeline
+                }
+            } catch(e) {
+                alert("Izoh qo'shishda xatolik yuz berdi!");
+            }
+        }
+
+        async function updateStatus(leadId, newStatus) {
+            try {
+                const res = await fetch(`/api/leads/${leadId}/status`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: newStatus, assigned_to: 'Web Admin' })
+                });
+                if (res.ok) {
+                    location.reload();
+                } else {
+                    alert("Statusni o'zgartirishda xatolik yuz berdi!");
+                }
+            } catch (err) {
+                console.error(err);
+                alert("Server bilan aloqa uzildi!");
+            }
+        }
+
+        async function submitNewLead(e) {
+            e.preventDefault();
+            const payload = {
+                full_name: document.getElementById('lead_name').value,
+                phone: document.getElementById('lead_phone').value,
+                course: document.getElementById('lead_course').value || 'Umumiy',
+                source: document.getElementById('lead_source').value,
+                ad_name: document.getElementById('lead_ad_name').value || 'Target Ads',
+                notes: document.getElementById('lead_notes').value
+            };
+
+            try {
+                const res = await fetch('/api/leads', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (res.ok) {
+                    closeModal();
+                    location.reload();
+                } else {
+                    alert("Lid qo'shishda xatolik yuz berdi!");
+                }
+            } catch (err) {
+                console.error(err);
+                alert("Server xatosi!");
+            }
+        }
+
+        // Initialize on load
+        window.addEventListener('DOMContentLoaded', () => {
+            updateGeneratedLink();
+            setupLiveEvents();
+        });
+    </script>
+</body>
+</html>

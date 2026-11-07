@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nemis Tili Kurslariga Qabul — Bepul Sinov Darsi</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-3 sm:p-5">
+
+    <div class="max-w-md w-full bg-white rounded-3xl shadow-2xl overflow-hidden p-6 sm:p-8 border border-slate-100">
+        
+        <!-- Header: German Flag Accent & Title -->
+        <div class="text-center mb-6">
+            <div class="inline-flex items-center space-x-1.5 px-3 py-1 bg-amber-50 rounded-full border border-amber-200/60 text-xs font-bold text-slate-800 mb-3">
+                <span>🇩🇪</span>
+                <span>DEUTSCHZENTRUM</span>
+            </div>
+            
+            <h1 class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight leading-tight">
+                Nemis Tilini Noldan B2 Gacha O'rganing!
+            </h1>
+            <p class="text-xs sm:text-sm text-slate-500 mt-2">
+                Germaniyaga <b>Ausbildung</b>, <b>Ish</b> yoki <b>Universitetga</b> ketish uchun bepul maslahat va sinov darsiga yoziling.
+            </p>
+        </div>
+
+        <!-- Lead Form -->
+        <form id="leadForm" onsubmit="handleSubmit(event)" class="space-y-4">
+            
+            <input type="hidden" id="ref" value="{{ ref or 'Instagram Target' }}">
+
+            <!-- Ism familiya -->
+            <div>
+                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                    <i class="fa-solid fa-user text-amber-500 mr-1"></i> Ism va Familiyangiz *
+                </label>
+                <input type="text" id="full_name" required placeholder="Masalan: Sardor Rahimov" 
+                    class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 transition">
+            </div>
+
+            <!-- Telefon raqam -->
+            <div>
+                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                    <i class="fa-solid fa-phone text-amber-500 mr-1"></i> Telefon raqamingiz *
+                </label>
+                <input type="tel" id="phone" required placeholder="+998 90 123 45 67" value="+998 "
+                    class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 transition">
+            </div>
+
+            <!-- Maqsad / Kurs tanlash -->
+            <div>
+                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                    <i class="fa-solid fa-bullseye text-amber-500 mr-1"></i> Asosiy maqsadingiz qaysi? *
+                </label>
+                <select id="course" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-semibold focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 transition">
+                    <option value="Ausbildung (Germaniya)" {% if course == 'Ausbildung' %}selected{% endif %}>🚀 Ausbildung (Maoshli ta'lim — B1/B2)</option>
+                    <option value="Nemis tili A1 (Noldan)" {% if course == 'A1' %}selected{% endif %}>🇩🇪 A1 — Noldan boshlovchilar uchun</option>
+                    <option value="Nemis tili A2-B1" {% if course == 'B1' %}selected{% endif %}>🇩🇪 A2 / B1 — Davom ettiruvchilar</option>
+                    <option value="Nemis tili B2 (Universitet/Ish)" {% if course == 'B2' %}selected{% endif %}>🎓 B2 — Universitet va Ish vizasi</option>
+                    <option value="Shifokor va Hamshiralar (Meditsina)" {% if course == 'Med' %}selected{% endif %}>🩺 Tibbiyot xodimlari uchun nemis tili</option>
+                    <option value="A1 Viza (Oila birlashtirish)" {% if course == 'VisaA1' %}selected{% endif %}>💍 A1 Viza — Oila birlashtirish (Tezkor)</option>
+                    <option value="Goethe / ÖSD Imtihoniga tayyorgarlik" {% if course == 'Goethe' %}selected{% endif %}>📜 Goethe / ÖSD sertifikatiga tayyorgarlik</option>
+                </select>
+            </div>
+
+            <!-- Hozirgi darajasi va Format -->
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                        Darajangiz
+                    </label>
+                    <select id="level" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-amber-500">
+                        <option value="Noldan (Bilmayman)">Noldan (Bilmayman)</option>
+                        <option value="A1 boshlang'ich">A1 boshlaganman</option>
+                        <option value="A2 o'rganganman">A2 darajadaman</option>
+                        <option value="B1 o'rganganman">B1 darajadaman</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                        Ta'lim formati
+                    </label>
+                    <select id="format" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-amber-500">
+                        <option value="Markazda (Offline)">🏢 Markazda (Offline)</option>
+                        <option value="Online (Zoom)">💻 Online (Zoom)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Qulay vaqt -->
+            <div>
+                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                    <i class="fa-regular fa-clock text-amber-500 mr-1"></i> Qulay dars vaqti
+                </label>
+                <div class="grid grid-cols-3 gap-2 text-xs">
+                    <label class="flex items-center justify-center p-2.5 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer hover:bg-amber-50 transition">
+                        <input type="radio" name="time_pref" value="Ertalab (09:00 - 13:00)" class="hidden peer">
+                        <span class="peer-checked:font-bold peer-checked:text-amber-600">🌅 Ertalab</span>
+                    </label>
+                    <label class="flex items-center justify-center p-2.5 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer hover:bg-amber-50 transition">
+                        <input type="radio" name="time_pref" value="Kunduzi (14:00 - 18:00)" class="hidden peer">
+                        <span class="peer-checked:font-bold peer-checked:text-amber-600">☀️ Kunduzi</span>
+                    </label>
+                    <label class="flex items-center justify-center p-2.5 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer hover:bg-amber-50 transition">
+                        <input type="radio" name="time_pref" value="Kechki (18:30 - 21:00)" class="hidden peer" checked>
+                        <span class="peer-checked:font-bold peer-checked:text-amber-600">🌙 Kechki</span>
+                    </label>
+                </div>
+            </div>
+
+            <button type="submit" id="submitBtn" class="w-full py-4 mt-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black rounded-xl shadow-lg shadow-amber-500/20 flex items-center justify-center space-x-2 text-base transition transform active:scale-98">
+                <span>Bepul Sinov Darsiga Yozilish</span>
+                <i class="fa-solid fa-arrow-right"></i>
+            </button>
+
+            <p class="text-[11px] text-slate-400 text-center mt-2.5">
+                🔒 Shaxsiy ma'lumotlaringiz xavfsizligi kafolatlanadi.
+            </p>
+        </form>
+
+        <!-- Success Screen -->
+        <div id="successScreen" class="hidden text-center py-6">
+            <div class="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">
+                <i class="fa-solid fa-check"></i>
+            </div>
+            <h2 class="text-2xl font-black text-slate-900">Arizangiz qabul qilindi! 🎉</h2>
+            <p class="text-sm text-slate-600 mt-2">
+                Rahmat! Nemis tili bo'yicha kuratorimiz 10 daqiqa ichida siz bilan bog'lanib, sinov darsi va Germaniya dasturlari bo'yicha to'liq ma'lumot beradi.
+            </p>
+
+            <div class="mt-5 p-4 bg-slate-50 border border-slate-200 rounded-2xl text-left text-xs text-slate-700 space-y-1.5">
+                <p><b>Ism:</b> <span id="resName"></span></p>
+                <p><b>Yo'nalish:</b> <span id="resCourse"></span></p>
+                <p><b>Telefon:</b> <span id="resPhone"></span></p>
+            </div>
+
+            <!-- Telegram Channel Bonus CTA -->
+            <div class="mt-5 p-4 bg-indigo-50 border border-indigo-200/80 rounded-2xl text-center">
+                <p class="text-xs font-bold text-indigo-900">🎁 Bepul bonus: "Nemis tili A1-B1 so'zlar to'plami va Ausbildung qo'llanmasi"</p>
+                <p class="text-[11px] text-indigo-700 mt-1">Hozirning o'zida Telegram kanalimizdan bepul yuklab oling!</p>
+                <a href="{{ channel_url or 'https://t.me' }}" target="_blank" class="mt-3 inline-flex items-center justify-center w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs shadow transition">
+                    <i class="fa-brands fa-telegram mr-1.5 text-sm"></i> Telegram Kanalga Kirish va Yuklab Olish
+                </a>
+            </div>
+
+            <button onclick="location.reload()" class="mt-4 text-slate-400 text-xs hover:underline">
+                Yana ariza qoldirish
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        async function handleSubmit(e) {
+            e.preventDefault();
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin mr-2"></i> Yuborilmoqda...`;
+
+            const selectedTime = document.querySelector('input[name="time_pref"]:checked')?.value || "Kechki";
+            const fullName = document.getElementById('full_name').value.trim();
+            const phone = document.getElementById('phone').value.trim();
+            const course = document.getElementById('course').value;
+            const level = document.getElementById('level').value;
+            const format = document.getElementById('format').value;
+            const ref = document.getElementById('ref').value;
+
+            const notesText = `Daraja: ${level} | Format: ${format} | Qulay vaqt: ${selectedTime}`;
+
+            const payload = {
+                full_name: fullName,
+                phone: phone,
+                course: course,
+                source: "Instagram Target (Nemis tili)",
+                ad_name: ref,
+                notes: notesText
+            };
+
+            try {
+                const res = await fetch('/api/leads', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (res.ok) {
+                    document.getElementById('leadForm').classList.add('hidden');
+                    document.getElementById('resName').textContent = fullName;
+                    document.getElementById('resCourse').textContent = `${course} (${format})`;
+                    document.getElementById('resPhone').textContent = phone;
+                    document.getElementById('successScreen').classList.remove('hidden');
+                } else {
+                    alert("Arizani yuborishda xatolik yuz berdi. Iltimos qaytadan urinib ko'ring.");
+                    btn.disabled = false;
+                    btn.innerHTML = `<span>Bepul Sinov Darsiga Yozilish</span> <i class="fa-solid fa-arrow-right"></i>`;
+                }
+            } catch (err) {
+                console.error(err);
+                alert("Internet bilan aloqa yo'q yoki server band.");
+                btn.disabled = false;
+                btn.innerHTML = `<span>Bepul Sinov Darsiga Yozilish</span> <i class="fa-solid fa-arrow-right"></i>`;
+            }
+        }
+    </script>
+</body>
+</html>
