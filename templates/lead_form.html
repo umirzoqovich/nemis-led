@@ -15,6 +15,24 @@
             box-shadow: 0 0 20px rgba(234, 179, 8, 0.25);
         }
     </style>
+
+    <!-- Meta Pixel Code -->
+    <script>
+    !function(f,b,e,v,n,t,s)
+    {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+    n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+    n.queue=[];t=b.createElement(e);t.async=!0;
+    t.src=v;s=b.getElementsByTagName(e)[0];
+    s.parentNode.insertBefore(t,s)}(window, document,'script',
+    'https://connect.facebook.net/en_US/fbevents.js');
+    fbq('init', '{{ pixel_id or "1608193907281587" }}');
+    fbq('track', 'PageView');
+    </script>
+    <noscript><img height="1" width="1" style="display:none"
+    src="https://www.facebook.com/tr?id={{ pixel_id or '1608193907281587' }}&ev=PageView&noscript=1"
+    /></noscript>
+    <!-- End Meta Pixel Code -->
 </head>
 <body class="min-h-screen flex items-center justify-center p-3 sm:p-5">
 
@@ -202,6 +220,16 @@
                 });
 
                 if (res.ok) {
+                    // Meta Pixel: Track Lead Event
+                    if (typeof fbq === 'function') {
+                        fbq('track', 'Lead', {
+                            content_name: course,
+                            content_category: 'German Education',
+                            currency: 'USD',
+                            value: 0
+                        });
+                    }
+
                     document.getElementById('leadForm').classList.add('hidden');
                     document.getElementById('resName').textContent = fullName;
                     document.getElementById('resCourse').textContent = course;

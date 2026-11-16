@@ -151,12 +151,16 @@ async def public_lead_form(
     Misol: /form?course=IELTS&ref=Instagram_Story_Noyabr
     """
     campaign_ref = ad or ref or "Instagram Target"
+    pixel_id = database.get_setting("META_PIXEL_ID", "1608193907281587")
+    channel_url = database.get_setting("TELEGRAM_CHANNEL_URL", settings.TELEGRAM_CHANNEL_URL or "https://t.me")
     return templates.TemplateResponse(
         request=request,
         name="lead_form.html",
         context={
             "course": course,
-            "ref": campaign_ref
+            "ref": campaign_ref,
+            "pixel_id": pixel_id,
+            "channel_url": channel_url
         }
     )
 
@@ -339,7 +343,8 @@ async def get_settings():
     return {
         "bot_token": database.get_setting("BOT_TOKEN", settings.BOT_TOKEN or ""),
         "telegram_group_id": database.get_setting("TELEGRAM_GROUP_ID", settings.TELEGRAM_GROUP_ID or ""),
-        "telegram_channel_url": database.get_setting("TELEGRAM_CHANNEL_URL", settings.TELEGRAM_CHANNEL_URL or "")
+        "telegram_channel_url": database.get_setting("TELEGRAM_CHANNEL_URL", settings.TELEGRAM_CHANNEL_URL or ""),
+        "meta_pixel_id": database.get_setting("META_PIXEL_ID", "1608193907281587")
     }
 
 @app.post("/api/settings")
@@ -348,11 +353,14 @@ async def save_settings(payload: dict):
     new_token = payload.get("bot_token", "").strip()
     new_group = payload.get("telegram_group_id", "").strip()
     new_channel = payload.get("telegram_channel_url", "").strip()
+    new_pixel = payload.get("meta_pixel_id", "").strip()
 
     # 1. Persist directly to SQLite database
     database.set_setting("BOT_TOKEN", new_token)
     database.set_setting("TELEGRAM_GROUP_ID", new_group)
     database.set_setting("TELEGRAM_CHANNEL_URL", new_channel)
+    if new_pixel:
+        database.set_setting("META_PIXEL_ID", new_pixel)
 
     # 2. Update runtime memory settings
     settings.BOT_TOKEN = new_token

@@ -571,6 +571,16 @@
                         class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
                 </div>
 
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1 flex items-center justify-between">
+                        <span>Meta Pixel ID (Target reklama)</span>
+                        <span class="text-[10px] text-indigo-600 font-bold bg-indigo-50 px-2 py-0.5 rounded-full">Facebook / Instagram</span>
+                    </label>
+                    <input type="text" id="setting_pixel_id" placeholder="1608193907281587" 
+                        class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <p class="text-[11px] text-slate-400 mt-1">Facebook Ads Event Manager'dagi Pixel ID</p>
+                </div>
+
                 <div id="settingsAlert" class="hidden p-3 rounded-xl text-xs"></div>
 
                 <div class="pt-2 flex items-center justify-between">
@@ -831,6 +841,7 @@
                 document.getElementById('setting_bot_token').value = data.bot_token || '';
                 document.getElementById('setting_group_id').value = data.telegram_group_id || '';
                 document.getElementById('setting_channel_url').value = data.telegram_channel_url || '';
+                document.getElementById('setting_pixel_id').value = data.meta_pixel_id || '1608193907281587';
             } catch(e) {
                 console.error(e);
             }
@@ -895,7 +906,8 @@
             const payload = {
                 bot_token: document.getElementById('setting_bot_token').value.trim(),
                 telegram_group_id: document.getElementById('setting_group_id').value.trim(),
-                telegram_channel_url: document.getElementById('setting_channel_url').value.trim()
+                telegram_channel_url: document.getElementById('setting_channel_url').value.trim(),
+                meta_pixel_id: document.getElementById('setting_pixel_id').value.trim()
             };
 
             const alertBox = document.getElementById('settingsAlert');
