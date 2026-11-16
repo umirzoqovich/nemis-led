@@ -72,6 +72,20 @@ def test_all():
     assert len(res.content) > 10000
     print("   -> Static Logo OK!")
 
+    print("9. Testing Settings API (GET /api/settings)...")
+    res = client.get("/api/settings")
+    assert res.status_code == 200
+    settings_data = res.json()
+    assert "bot_token" in settings_data
+    assert "telegram_group_id" in settings_data
+    print("   -> Settings API OK!")
+
+    print("10. Testing Confirmed Status Update (PATCH /api/leads/{id}/status)...")
+    res = client.patch(f"/api/leads/{lead['id']}/status", json={"status": "CONFIRMED", "assigned_to": "Operator Timur"})
+    assert res.status_code == 200
+    assert res.json()["status"] == "CONFIRMED"
+    print("   -> Confirmed Status Update OK!")
+
     print("\n✅ BARCHA TESTLAR MUVAFFAQIYATLI O'TDI!")
 
 if __name__ == "__main__":

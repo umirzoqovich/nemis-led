@@ -52,7 +52,8 @@
         <select onchange="updateStatus({{ lead.id }}, this.value)" class="text-xs bg-slate-50 border border-slate-200 rounded px-1.5 py-1 text-slate-700 font-medium focus:outline-none focus:ring-1 focus:ring-indigo-500 w-full">
             <option value="NEW" {% if lead.status == 'NEW' %}selected{% endif %}>🟢 Yangi</option>
             <option value="CONTACTED" {% if lead.status == 'CONTACTED' %}selected{% endif %}>🟡 Bog'lanildi</option>
-            <option value="TRIAL_SCHEDULED" {% if lead.status == 'TRIAL_SCHEDULED' %}selected{% endif %}>🔵 Sinov darsi</option>
+            <option value="CONFIRMED" {% if lead.status == 'CONFIRMED' %}selected{% endif %}>🔵 Tasdiqlandi</option>
+            <option value="TRIAL_SCHEDULED" {% if lead.status == 'TRIAL_SCHEDULED' %}selected{% endif %}>🟣 Sinov darsi</option>
             <option value="PAID" {% if lead.status == 'PAID' %}selected{% endif %}>✅ To'lov qildi</option>
             <option value="CANCELLED" {% if lead.status == 'CANCELLED' %}selected{% endif %}>❌ Rad etdi</option>
         </select>

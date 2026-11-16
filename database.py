@@ -261,6 +261,7 @@ def get_lead_stats() -> Dict[str, Any]:
     
     new_count = status_counts.get("NEW", 0)
     contacted_count = status_counts.get("CONTACTED", 0)
+    confirmed_count = status_counts.get("CONFIRMED", 0)
     trial_count = status_counts.get("TRIAL_SCHEDULED", 0) + status_counts.get("TRIAL_ATTENDED", 0)
     paid_count = status_counts.get("PAID", 0)
     cancelled_count = status_counts.get("CANCELLED", 0)
@@ -272,6 +273,7 @@ def get_lead_stats() -> Dict[str, Any]:
         "today": today_count,
         "new": new_count,
         "contacted": contacted_count,
+        "confirmed": confirmed_count,
         "trial": trial_count,
         "paid": paid_count,
         "cancelled": cancelled_count,

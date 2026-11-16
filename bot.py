@@ -10,19 +10,19 @@ import database
 logger = logging.getLogger(__name__)
 
 STATUS_NAMES = {
-    "NEW": "🟢 Yangi kelgan",
+    "NEW": "🟢 Yangi lid",
     "CONTACTED": "🟡 Bog'lanildi",
-    "TRIAL_SCHEDULED": "🔵 Sinov darsiga yozildi",
-    "TRIAL_ATTENDED": "🟣 Sinov darsiga keldi",
-    "PAID": "✅ To'lov qildi (O'quvchi)",
-    "CANCELLED": "❌ Rad etdi / Qiziqmadi"
+    "CONFIRMED": "🔵 Tasdiqlandi",
+    "TRIAL_SCHEDULED": "🟣 Sinov darsida",
+    "PAID": "✅ To'lov qildi",
+    "CANCELLED": "❌ Rad etdi"
 }
 
 STATUS_ICONS = {
     "NEW": "🟢",
     "CONTACTED": "🟡",
-    "TRIAL_SCHEDULED": "🔵",
-    "TRIAL_ATTENDED": "🟣",
+    "CONFIRMED": "🔵",
+    "TRIAL_SCHEDULED": "🟣",
     "PAID": "✅",
     "CANCELLED": "❌"
 }
@@ -31,37 +31,48 @@ STATUS_ICONS = {
 bot: Optional[Bot] = None
 dp: Optional[Dispatcher] = None
 
-if settings.BOT_TOKEN:
-    session = AiohttpSession(proxy=settings.TELEGRAM_PROXY) if settings.TELEGRAM_PROXY else None
-    bot = Bot(token=settings.BOT_TOKEN, session=session)
-    dp = Dispatcher()
+def init_bot(token: Optional[str] = None, proxy: Optional[str] = None):
+    global bot, dp
+    t = token or settings.BOT_TOKEN
+    p = proxy or settings.TELEGRAM_PROXY
+    if t:
+        session = AiohttpSession(proxy=p) if p else None
+        bot = Bot(token=t, session=session)
+        dp = Dispatcher()
+        register_handlers(dp)
+    else:
+        bot = None
+        dp = None
 
 def get_status_label(status: str) -> str:
     return STATUS_NAMES.get(status, status)
 
 def format_lead_message(lead: Dict[str, Any]) -> str:
     clean_phone = "".join(filter(str.isdigit, lead["phone"]))
-    wa_link = f"https://wa.me/{clean_phone}" if clean_phone else ""
-    tg_search = f"https://t.me/+{clean_phone}" if clean_phone else ""
-
-    reapply_badge = "\n🚨 <b>DIQQAT! QAYTA MUROJAAT (HOT LEAD)!</b>\n<i>Ushbu o'quvchi nemis tili reklamasini 2-marta bosdi!</i>\n" if lead.get("is_reapplied") else ""
+    reapply_badge = "\n🚨 <b>DIQQAT! QAYTA MUROJAAT (HOT LEAD)!</b>\n" if lead.get("is_reapplied") else ""
 
     text = (
         f"🇩🇪 <b>YANGI NEMIS TILI LIDI! (#{lead['id']})</b>\n"
-        f"🏫 <b>Markaz:</b> Start Education (Deutsch Mit Nurxo'ja)\n"
+        f"🏫 <b>Markaz:</b> Start Education\n"
         f"{reapply_badge}"
         f"━━━━━━━━━━━━━━━━━━━━\n"
-        f"👤 <b>Ismi:</b> {lead['full_name']}\n"
-        f"📞 <b>Telefon:</b> <code>{lead['phone']}</code>\n"
-        f"🎯 <b>Yo'nalish / Maqsad:</b> {lead.get('course') or 'Nemis tili'}\n"
-        f"📋 <b>Tafsilotlar:</b> {lead.get('notes') or '-'}\n"
-        f"📣 <b>Target:</b> {lead.get('ad_name') or 'Instagram Ads'}\n"
-        f"━━━━━━━━━━━━━━━━━━━━\n"
-        f"📊 <b>Status:</b> {get_status_label(lead['status'])}\n"
+        f"👤 <b>F.I.SH:</b> {lead['full_name']}\n"
+        f"📞 <b>Tel:</b> <code>{lead['phone']}</code>\n"
+        f"🎯 <b>Kurs:</b> {lead.get('course') or 'Nemis tili'}\n"
     )
-    if lead.get("assigned_to"):
-        text += f"👨‍💼 <b>Mas'ul kurator:</b> {lead['assigned_to']}\n"
+    if lead.get("notes"):
+        text += f"📋 <b>Ma'lumot:</b> {lead['notes']}\n"
+    if lead.get("ad_name"):
+        text += f"📣 <b>Target:</b> {lead['ad_name']}\n"
         
+    text += "━━━━━━━━━━━━━━━━━━━━\n"
+    text += f"📊 <b>Status:</b> {get_status_label(lead['status'])}\n"
+    if lead.get("assigned_to"):
+        text += f"👨‍💼 <b>Mas'ul:</b> {lead['assigned_to']}\n"
+    if lead.get("trial_date"):
+        text += f"📅 <b>Sinov darsi:</b> {lead['trial_date']}\n"
+    if lead.get("cancel_reason"):
+        text += f"❌ <b>Rad sababi:</b> {lead['cancel_reason']}\n"
     text += f"⏰ <b>Kelgan vaqti:</b> {lead.get('created_at', '')}\n"
     return text
 
@@ -69,16 +80,41 @@ def build_lead_keyboard(lead_id: int, current_status: str) -> InlineKeyboardMark
     buttons = [
         [
             InlineKeyboardButton(text="📞 Bog'lanildi", callback_data=f"st:CONTACTED:{lead_id}"),
-            InlineKeyboardButton(text="📅 Sinov darsi", callback_data=f"st:TRIAL_SCHEDULED:{lead_id}")
+            InlineKeyboardButton(text="🔵 Tasdiqlandi", callback_data=f"st:CONFIRMED:{lead_id}")
         ],
         [
-            InlineKeyboardButton(text="✅ To'lov qildi", callback_data=f"st:PAID:{lead_id}"),
-            InlineKeyboardButton(text="❌ Qiziqmadi", callback_data=f"st:CANCELLED:{lead_id}")
+            InlineKeyboardButton(text="🟣 Sinov darsi", callback_data=f"st:TRIAL_SCHEDULED:{lead_id}"),
+            InlineKeyboardButton(text="✅ To'lov qildi", callback_data=f"st:PAID:{lead_id}")
+        ],
+        [
+            InlineKeyboardButton(text="❌ Rad etdi", callback_data=f"st:CANCELLED:{lead_id}")
         ]
     ]
     if current_status != "NEW":
         buttons.append([InlineKeyboardButton(text="🔄 Yangi holatga qaytarish", callback_data=f"st:NEW:{lead_id}")])
     return InlineKeyboardMarkup(inline_keyboard=buttons)
+
+async def notify_status_update(lead: Dict[str, Any], new_status: str, admin_name: str) -> None:
+    """Sends status change notification to the Telegram group."""
+    if not bot or not settings.TELEGRAM_GROUP_ID:
+        return
+    try:
+        chat_id = settings.TELEGRAM_GROUP_ID.strip()
+        status_label = get_status_label(new_status)
+        text = (
+            f"🔔 <b>STATUS YANGILANDI! (#{lead['id']})</b>\n"
+            f"👤 <b>O'quvchi:</b> {lead['full_name']}\n"
+            f"📞 <b>Tel:</b> <code>{lead['phone']}</code>\n"
+            f"📊 <b>Yangi status:</b> {status_label}\n"
+            f"👨‍💼 <b>O'zgartirdi:</b> {admin_name}"
+        )
+        if lead.get("trial_date") and new_status == "TRIAL_SCHEDULED":
+            text += f"\n📅 <b>Sinov darsi:</b> {lead['trial_date']}"
+        if lead.get("cancel_reason") and new_status == "CANCELLED":
+            text += f"\n❌ <b>Sabab:</b> {lead['cancel_reason']}"
+        await bot.send_message(chat_id=chat_id, text=text, parse_mode="HTML")
+    except Exception as e:
+        logger.warning(f"Telegramga status bildirishnomasi yuborishda xatolik: {e}")
 
 async def send_lead_notification(lead: Dict[str, Any]) -> Optional[int]:
     """Sends new lead to the configured Telegram Group or Channel."""
@@ -104,9 +140,8 @@ async def send_lead_notification(lead: Dict[str, Any]) -> Optional[int]:
         logger.error(f"Telegramga xabar yuborishda xatolik: {e}")
         return None
 
-# Register Dispatcher Handlers if bot is initialized
-if dp:
-    @dp.message(Command("start"))
+def register_handlers(target_dp: Dispatcher):
+    @target_dp.message(Command("start"))
     async def cmd_start(message: types.Message):
         user_name = message.from_user.full_name
         text = (
@@ -123,22 +158,20 @@ if dp:
         )
         await message.answer(text, parse_mode="HTML")
 
-    @dp.message(Command("id"))
+    @target_dp.message(Command("id"))
     async def cmd_id(message: types.Message):
         chat_id = message.chat.id
         user_id = message.from_user.id
         await message.answer(
             f"🆔 <b>Chat ID:</b> <code>{chat_id}</code>\n"
             f"👤 <b>Foydalanuvchi ID:</b> <code>{user_id}</code>\n\n"
-            f"<i>Ushbu Chat ID ni .env faylidagi TELEGRAM_GROUP_ID ga qo'yishingiz mumkin.</i>",
+            f"<i>Ushbu Chat ID ni CRM Sozlamalarida TELEGRAM_GROUP_ID ga qo'yishingiz mumkin.</i>",
             parse_mode="HTML"
         )
 
-    @dp.message(Command("stats"))
+    @target_dp.message(Command("stats"))
     async def cmd_stats(message: types.Message):
         stats = database.get_lead_stats()
-        
-        # Course breakdown text
         courses_text = ""
         for c_name, count in stats.get("by_course", {}).items():
             courses_text += f"   • {c_name}: <b>{count} ta</b>\n"
@@ -149,22 +182,22 @@ if dp:
             f"📥 <b>Jami kelgan lidlar:</b> {stats['total']} ta\n"
             f"⚡ <b>Bugun tushgan:</b> {stats['today']} ta\n"
             f"━━━━━━━━━━━━━━━━━━━━\n"
-            f"🟢 <b>Yangi (kutilmoqda):</b> {stats['new']} ta\n"
+            f"🟢 <b>Yangi:</b> {stats['new']} ta\n"
             f"🟡 <b>Bog'lanilgan:</b> {stats['contacted']} ta\n"
-            f"🔵 <b>Sinov darsida:</b> {stats['trial']} ta\n"
+            f"🔵 <b>Tasdiqlangan:</b> {stats.get('confirmed', 0)} ta\n"
+            f"🟣 <b>Sinov darsida:</b> {stats['trial']} ta\n"
             f"✅ <b>To'lov qilganlar:</b> {stats['paid']} ta\n"
             f"❌ <b>Rad etganlar:</b> {stats['cancelled']} ta\n"
             f"━━━━━━━━━━━━━━━━━━━━\n"
             f"🏆 <b>Sotuv konversiyasi:</b> <b>{stats['conversion']}%</b>\n\n"
-            f"🎯 <b>Eng ommabop yo'nalishlar:</b>\n"
+            f"🎯 <b>Yo'nalishlar bo'yicha:</b>\n"
             f"{courses_text or '   (Hozircha ma''lumot yo''q)'}"
         )
         await message.answer(text, parse_mode="HTML")
 
-    @dp.message(Command("today"))
-    @dp.message(Command("bugun"))
+    @target_dp.message(Command("today"))
+    @target_dp.message(Command("bugun"))
     async def cmd_today(message: types.Message):
-        stats = database.get_lead_stats()
         all_leads = database.get_all_leads(limit=50)
         from datetime import datetime
         today_str = datetime.now().strftime("%Y-%m-%d")
@@ -183,8 +216,8 @@ if dp:
 
         await message.answer(text, parse_mode="HTML")
 
-    @dp.message(Command("find"))
-    @dp.message(Command("qidiruv"))
+    @target_dp.message(Command("find"))
+    @target_dp.message(Command("qidiruv"))
     async def cmd_find(message: types.Message):
         args = message.text.split(maxsplit=1)
         if len(args) < 2:
@@ -215,7 +248,7 @@ if dp:
 
         await message.answer(text, parse_mode="HTML")
 
-    @dp.message(Command("leads"))
+    @target_dp.message(Command("leads"))
     async def cmd_leads(message: types.Message):
         leads = database.get_all_leads(limit=10)
         if not leads:
@@ -230,7 +263,7 @@ if dp:
 
         await message.answer(text, parse_mode="HTML")
 
-    @dp.callback_query(F.data.startswith("st:"))
+    @target_dp.callback_query(F.data.startswith("st:"))
     async def handle_status_change(callback: types.CallbackQuery):
         # Format: st:STATUS:LEAD_ID
         parts = callback.data.split(":")
@@ -268,4 +301,8 @@ if dp:
         except Exception as e:
             logger.error(f"Xabarni tahrirlashda xatolik: {e}")
             await callback.answer("Status bazada yangilandi!")
+
+# Initialize on module import if BOT_TOKEN is present
+if settings.BOT_TOKEN:
+    init_bot()
 

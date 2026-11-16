@@ -113,6 +113,7 @@ async def web_dashboard(request: Request, search: Optional[str] = None):
     leads_by_status = {
         "NEW": [],
         "CONTACTED": [],
+        "CONFIRMED": [],
         "TRIAL_SCHEDULED": [],
         "PAID": [],
         "CANCELLED": []
@@ -241,7 +242,7 @@ async def update_status(lead_id: int, payload: models.LeadUpdateStatus):
     if not updated:
         raise HTTPException(status_code=404, detail="Lid topilmadi")
 
-    # If telegram message exists, try to update it
+    # If telegram message exists, update in-place in Telegram
     if bot.bot and updated.get("telegram_message_id") and settings.TELEGRAM_GROUP_ID:
         try:
             text = bot.format_lead_message(updated)
@@ -256,10 +257,76 @@ async def update_status(lead_id: int, payload: models.LeadUpdateStatus):
         except Exception as e:
             logger.warning(f"Telegramdagi xabarni yangilashda xatolik: {e}")
 
+    # Also send a quick status change alert to the Telegram group
+    await bot.notify_status_update(updated, payload.status, payload.assigned_to or "Web Admin")
+
     # Broadcast status change to connected browsers
     await broadcast_event("STATUS_UPDATED", updated)
 
     return updated
+
+# ==========================================
+# SETTINGS: BOT & GROUP CONFIGURATION IN CRM
+# ==========================================
+@app.get("/api/settings")
+async def get_settings():
+    return {
+        "bot_token": settings.BOT_TOKEN or "",
+        "telegram_group_id": settings.TELEGRAM_GROUP_ID or "",
+        "telegram_channel_url": settings.TELEGRAM_CHANNEL_URL or ""
+    }
+
+@app.post("/api/settings")
+async def save_settings(payload: dict):
+    new_token = payload.get("bot_token", "").strip()
+    new_group = payload.get("telegram_group_id", "").strip()
+    new_channel = payload.get("telegram_channel_url", "").strip()
+
+    settings.BOT_TOKEN = new_token
+    settings.TELEGRAM_GROUP_ID = new_group
+    if new_channel:
+        settings.TELEGRAM_CHANNEL_URL = new_channel
+
+    # Write to .env
+    env_dict = {}
+    if os.path.exists(".env"):
+        with open(".env", "r", encoding="utf-8") as f:
+            for line in f:
+                line_s = line.strip()
+                if line_s and not line_s.startswith("#") and "=" in line_s:
+                    k, v = line_s.split("=", 1)
+                    env_dict[k.strip()] = v.strip()
+
+    env_dict["BOT_TOKEN"] = new_token
+    env_dict["TELEGRAM_GROUP_ID"] = new_group
+    if new_channel:
+        env_dict["TELEGRAM_CHANNEL_URL"] = new_channel
+
+    with open(".env", "w", encoding="utf-8") as f:
+        f.write("# Start Education - Deutsch Mit Nurxo'ja Target CRM\n")
+        for k, v in env_dict.items():
+            f.write(f"{k}={v}\n")
+
+    # Reinitialize bot
+    bot.init_bot(token=new_token)
+
+    return {"status": "ok", "message": "Sozlamalar saqlandi va Telegram Bot ulandi!"}
+
+@app.post("/api/settings/test")
+async def test_telegram_connection():
+    if not bot.bot or not settings.TELEGRAM_GROUP_ID:
+        raise HTTPException(status_code=400, detail="Bot Token yoki Guruh ID kiritilmagan!")
+    try:
+        me = await bot.bot.get_me()
+        chat_id = settings.TELEGRAM_GROUP_ID.strip()
+        msg = await bot.bot.send_message(
+            chat_id=chat_id,
+            text=f"✅ <b>Telegram aloqasi muvaffaqiyatli tekshirildi!</b>\n\n🤖 <b>Bot:</b> @{me.username} ({me.first_name})\n🏫 <b>Markaz:</b> Start Education (Deutsch Mit Nurxo'ja)",
+            parse_mode="HTML"
+        )
+        return {"status": "ok", "bot_username": me.username, "message_id": msg.message_id}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Telegram xatolik: {str(e)}")
 
 @app.get("/api/events")
 async def sse_events(request: Request):

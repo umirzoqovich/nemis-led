@@ -39,6 +39,9 @@
             </div>
 
             <div class="flex items-center space-x-2 sm:space-x-3">
+                <button onclick="openSettingsModal()" class="bg-indigo-900/70 hover:bg-indigo-950 text-white px-3 py-2 rounded-lg text-xs sm:text-sm font-semibold flex items-center shadow transition border border-indigo-400/30">
+                    <i class="fa-solid fa-gear mr-1.5 text-amber-300"></i> Sozlamalar
+                </button>
                 <button onclick="sendQuickTestLead()" class="bg-amber-400 hover:bg-amber-300 text-slate-950 px-3 py-2 rounded-lg text-xs sm:text-sm font-extrabold flex items-center shadow transition active:scale-95">
                     <i class="fa-solid fa-bolt mr-1.5 text-slate-900"></i> Test Lid
                 </button>
@@ -193,8 +196,8 @@
             </div>
         </div>
 
-        <!-- Kanban Board: 5 Columns -->
-        <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <!-- Kanban Board: 6 Columns -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
 
             <!-- Column 1: Yangi Lidlar -->
             <div class="bg-slate-200/70 p-3 rounded-xl kanban-col flex flex-col">
@@ -225,6 +228,24 @@
                 </div>
                 <div id="col_CONTACTED" class="space-y-3 overflow-y-auto flex-1">
                     {% for lead in leads_by_status['CONTACTED'] %}
+                        {% include 'lead_card.html' %}
+                    {% else %}
+                        <p class="text-xs text-slate-400 text-center py-8">Hozircha bo'sh</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Column 3: Tasdiqlandi -->
+            <div class="bg-slate-200/70 p-3 rounded-xl kanban-col flex flex-col">
+                <div class="flex items-center justify-between mb-3 px-1">
+                    <h3 class="font-bold text-slate-700 text-sm flex items-center">
+                        <span class="w-2.5 h-2.5 rounded-full bg-blue-500 mr-2"></span>
+                        Tasdiqlandi
+                    </h3>
+                    <span class="text-xs bg-slate-300 text-slate-700 px-2 py-0.5 rounded-full font-semibold">{{ leads_by_status['CONFIRMED']|length }}</span>
+                </div>
+                <div id="col_CONFIRMED" class="space-y-3 overflow-y-auto flex-1">
+                    {% for lead in leads_by_status['CONFIRMED'] %}
                         {% include 'lead_card.html' %}
                     {% else %}
                         <p class="text-xs text-slate-400 text-center py-8">Hozircha bo'sh</p>
@@ -372,6 +393,64 @@
                 <input type="hidden" id="detailLeadId">
                 <input type="text" id="newNoteText" required placeholder="Yangi izoh yozish..." class="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500">
                 <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-xs font-bold transition">Qo'shish</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Settings (Bot Token & Group ID) -->
+    <div id="settingsModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl relative">
+            <button onclick="closeSettingsModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
+                <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
+            <div class="flex items-center space-x-2.5 mb-2">
+                <div class="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-lg">
+                    <i class="fa-solid fa-gear"></i>
+                </div>
+                <div>
+                    <h2 class="text-lg font-bold text-slate-900">CRM Sozlamalari</h2>
+                    <p class="text-xs text-slate-500">Telegram Bot va Guruh Chat ID ni shu yerdan o'zgartiring</p>
+                </div>
+            </div>
+
+            <form id="settingsForm" onsubmit="saveSettings(event)" class="space-y-4 mt-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                        Telegram Bot Token *
+                    </label>
+                    <input type="text" id="setting_bot_token" required placeholder="Masalan: 1234567890:AAH..." 
+                        class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <p class="text-[11px] text-slate-400 mt-1">@BotFather orqali olingan token</p>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                        Telegram Guruh / Chat ID *
+                    </label>
+                    <input type="text" id="setting_group_id" required placeholder="Masalan: -5359076030" 
+                        class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <p class="text-[11px] text-slate-400 mt-1">Lidlar borishi kerak bo'lgan Telegram guruh ID si</p>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                        Markaz Telegram Kanali (Ixtiyoriy)
+                    </label>
+                    <input type="text" id="setting_channel_url" placeholder="https://t.me/start_education" 
+                        class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+
+                <div id="settingsAlert" class="hidden p-3 rounded-xl text-xs"></div>
+
+                <div class="pt-2 flex items-center justify-between">
+                    <button type="button" onclick="testTelegramConn()" id="btnTestConn" class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl text-xs transition flex items-center">
+                        <i class="fa-solid fa-paper-plane mr-1.5 text-indigo-600"></i> Aloqani tekshirish
+                    </button>
+                    <div class="flex space-x-2">
+                        <button type="button" onclick="closeSettingsModal()" class="px-4 py-2 border border-slate-200 rounded-xl text-xs font-medium text-slate-600 hover:bg-slate-50">Yopish</button>
+                        <button type="submit" id="btnSaveSettings" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow transition">Saqlash</button>
+                    </div>
+                </div>
             </form>
         </div>
     </div>
@@ -608,6 +687,83 @@
             } catch (err) {
                 console.error(err);
                 alert("Server xatosi!");
+            }
+        }
+
+        async function openSettingsModal() {
+            document.getElementById('settingsModal').classList.remove('hidden');
+            const alertBox = document.getElementById('settingsAlert');
+            alertBox.classList.add('hidden');
+            try {
+                const res = await fetch('/api/settings');
+                const data = await res.json();
+                document.getElementById('setting_bot_token').value = data.bot_token || '';
+                document.getElementById('setting_group_id').value = data.telegram_group_id || '';
+                document.getElementById('setting_channel_url').value = data.telegram_channel_url || '';
+            } catch(e) {
+                console.error(e);
+            }
+        }
+
+        function closeSettingsModal() {
+            document.getElementById('settingsModal').classList.add('hidden');
+        }
+
+        async function saveSettings(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btnSaveSettings');
+            btn.disabled = true;
+            btn.textContent = 'Saqlanmoqda...';
+
+            const payload = {
+                bot_token: document.getElementById('setting_bot_token').value.trim(),
+                telegram_group_id: document.getElementById('setting_group_id').value.trim(),
+                telegram_channel_url: document.getElementById('setting_channel_url').value.trim()
+            };
+
+            try {
+                const res = await fetch('/api/settings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                const alertBox = document.getElementById('settingsAlert');
+                alertBox.className = 'p-3 rounded-xl text-xs bg-emerald-50 text-emerald-800 border border-emerald-200';
+                alertBox.textContent = '✅ ' + (data.message || 'Muvaffaqiyatli saqlandi!');
+                alertBox.classList.remove('hidden');
+                setTimeout(() => location.reload(), 1500);
+            } catch(e) {
+                alert("Sozlamalarni saqlashda xatolik yuz berdi!");
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Saqlash';
+            }
+        }
+
+        async function testTelegramConn() {
+            const btn = document.getElementById('btnTestConn');
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-1.5"></i> Tekshirilmoqda...`;
+            const alertBox = document.getElementById('settingsAlert');
+            try {
+                const res = await fetch('/api/settings/test', { method: 'POST' });
+                const data = await res.json();
+                if (res.ok) {
+                    alertBox.className = 'p-3 rounded-xl text-xs bg-emerald-50 text-emerald-800 border border-emerald-200';
+                    alertBox.textContent = `✅ Guruhga test xabari bordi! (Bot: @${data.bot_username})`;
+                } else {
+                    alertBox.className = 'p-3 rounded-xl text-xs bg-rose-50 text-rose-800 border border-rose-200';
+                    alertBox.textContent = `❌ ${data.detail || 'Xatolik yuz berdi'}`;
+                }
+                alertBox.classList.remove('hidden');
+            } catch(e) {
+                alertBox.className = 'p-3 rounded-xl text-xs bg-rose-50 text-rose-800 border border-rose-200';
+                alertBox.textContent = `❌ Server bilan aloqa yo'q!`;
+                alertBox.classList.remove('hidden');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<i class="fa-solid fa-paper-plane mr-1.5 text-indigo-600"></i> Aloqani tekshirish`;
             }
         }
 
