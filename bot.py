@@ -48,6 +48,7 @@ def format_lead_message(lead: Dict[str, Any]) -> str:
 
     text = (
         f"🇩🇪 <b>YANGI NEMIS TILI LIDI! (#{lead['id']})</b>\n"
+        f"🏫 <b>Markaz:</b> Start Education (Deutsch Mit Nurxo'ja)\n"
         f"{reapply_badge}"
         f"━━━━━━━━━━━━━━━━━━━━\n"
         f"👤 <b>Ismi:</b> {lead['full_name']}\n"
@@ -110,7 +111,7 @@ if dp:
         user_name = message.from_user.full_name
         text = (
             f"Assalomu alaykum, {user_name}!\n\n"
-            f"🇩🇪 <b>Deutsch Mit Nurxo'ja — Nemis Tili Target CRM Boti!</b>\n\n"
+            f"🇩🇪 <b>Start Education («Deutsch Mit Nurxo'ja») — Nemis Tili Target CRM Boti!</b>\n\n"
             f"Ushbu bot Instagram va Facebook target reklamalaridan kelgan har bir lidni "
             f"darhol ushbu guruhga yetkazadi.\n\n"
             f"📌 <b>Mavjud buyruqlar:</b>\n"
