@@ -94,27 +94,51 @@ def build_lead_keyboard(lead_id: int, current_status: str) -> InlineKeyboardMark
         buttons.append([InlineKeyboardButton(text="🔄 Yangi holatga qaytarish", callback_data=f"st:NEW:{lead_id}")])
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 
+def check_and_update_migration(e: Exception) -> Optional[str]:
+    """If Telegram group was upgraded to supergroup, automatically updates settings and SQLite DB."""
+    import re
+    msg = str(e)
+    match = re.search(r"migrated to a supergroup with id\s+(-?\d+)", msg)
+    if match:
+        new_id = match.group(1).strip()
+        logger.info(f"Telegram guruhi yangi superguruhga o'tdi: {new_id}. Sozlamalar avtomatik yangilanmoqda...")
+        settings.TELEGRAM_GROUP_ID = new_id
+        try:
+            database.set_setting("TELEGRAM_GROUP_ID", new_id)
+        except Exception:
+            pass
+        return new_id
+    return None
+
 async def notify_status_update(lead: Dict[str, Any], new_status: str, admin_name: str) -> None:
     """Sends status change notification to the Telegram group."""
     if not bot or not settings.TELEGRAM_GROUP_ID:
         return
+    chat_id = settings.TELEGRAM_GROUP_ID.strip()
+    status_label = get_status_label(new_status)
+    text = (
+        f"🔔 <b>STATUS YANGILANDI! (#{lead['id']})</b>\n"
+        f"👤 <b>O'quvchi:</b> {lead['full_name']}\n"
+        f"📞 <b>Tel:</b> <code>{lead['phone']}</code>\n"
+        f"📊 <b>Yangi status:</b> {status_label}\n"
+        f"👨‍💼 <b>O'zgartirdi:</b> {admin_name}"
+    )
+    if lead.get("trial_date") and new_status == "TRIAL_SCHEDULED":
+        text += f"\n📅 <b>Sinov darsi:</b> {lead['trial_date']}"
+    if lead.get("cancel_reason") and new_status == "CANCELLED":
+        text += f"\n❌ <b>Sabab:</b> {lead['cancel_reason']}"
+
     try:
-        chat_id = settings.TELEGRAM_GROUP_ID.strip()
-        status_label = get_status_label(new_status)
-        text = (
-            f"🔔 <b>STATUS YANGILANDI! (#{lead['id']})</b>\n"
-            f"👤 <b>O'quvchi:</b> {lead['full_name']}\n"
-            f"📞 <b>Tel:</b> <code>{lead['phone']}</code>\n"
-            f"📊 <b>Yangi status:</b> {status_label}\n"
-            f"👨‍💼 <b>O'zgartirdi:</b> {admin_name}"
-        )
-        if lead.get("trial_date") and new_status == "TRIAL_SCHEDULED":
-            text += f"\n📅 <b>Sinov darsi:</b> {lead['trial_date']}"
-        if lead.get("cancel_reason") and new_status == "CANCELLED":
-            text += f"\n❌ <b>Sabab:</b> {lead['cancel_reason']}"
         await bot.send_message(chat_id=chat_id, text=text, parse_mode="HTML")
     except Exception as e:
-        logger.warning(f"Telegramga status bildirishnomasi yuborishda xatolik: {e}")
+        new_id = check_and_update_migration(e)
+        if new_id:
+            try:
+                await bot.send_message(chat_id=new_id, text=text, parse_mode="HTML")
+            except Exception:
+                pass
+        else:
+            logger.warning(f"Telegramga status bildirishnomasi yuborishda xatolik: {e}")
 
 async def send_lead_notification(lead: Dict[str, Any]) -> Optional[int]:
     """Sends new lead to the configured Telegram Group or Channel."""
@@ -122,21 +146,34 @@ async def send_lead_notification(lead: Dict[str, Any]) -> Optional[int]:
         logger.warning("Telegram Bot yoki TELEGRAM_GROUP_ID sozlanmagan. Xabar yuborilmadi.")
         return None
 
+    chat_id = settings.TELEGRAM_GROUP_ID.strip()
+    text = format_lead_message(lead)
+    keyboard = build_lead_keyboard(lead["id"], lead["status"])
+
     try:
-        chat_id = settings.TELEGRAM_GROUP_ID.strip()
-        text = format_lead_message(lead)
-        keyboard = build_lead_keyboard(lead["id"], lead["status"])
-        
         msg = await bot.send_message(
             chat_id=chat_id,
             text=text,
             reply_markup=keyboard,
             parse_mode="HTML"
         )
-        # Save message id
         database.update_lead_telegram_msg_id(lead["id"], msg.message_id)
         return msg.message_id
     except Exception as e:
+        new_id = check_and_update_migration(e)
+        if new_id:
+            try:
+                msg = await bot.send_message(
+                    chat_id=new_id,
+                    text=text,
+                    reply_markup=keyboard,
+                    parse_mode="HTML"
+                )
+                database.update_lead_telegram_msg_id(lead["id"], msg.message_id)
+                logger.info(f"Xabar yangi superguruhga ({new_id}) muvaffaqiyatli yetkazildi!")
+                return msg.message_id
+            except Exception as e2:
+                logger.error(f"Yangi superguruhga yuborishda xatolik: {e2}")
         logger.error(f"Telegramga xabar yuborishda xatolik: {e}")
         return None
 

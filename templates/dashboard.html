@@ -196,8 +196,139 @@
             </div>
         </div>
 
-        <!-- Kanban Board: 6 Columns -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
+        <!-- View Switcher & Actions Toolbar -->
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
+            <div class="flex items-center space-x-2">
+                <span class="text-sm font-black text-slate-800 flex items-center">
+                    <i class="fa-solid fa-graduation-cap text-indigo-600 mr-2 text-base"></i>
+                    Talabalar ro'yxati (<span id="leadsCountBadge">{{ all_leads|length }}</span>)
+                </span>
+                <span class="text-xs text-slate-400 font-medium">| Start Education</span>
+            </div>
+
+            <div class="flex items-center space-x-2 bg-slate-200/80 p-1 rounded-xl">
+                <button id="viewBtnTable" onclick="switchView('table')" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 bg-white text-indigo-700 shadow-sm">
+                    <i class="fa-solid fa-table-list"></i>
+                    <span>Jadval ko'rinishi</span>
+                </button>
+                <button id="viewBtnKanban" onclick="switchView('kanban')" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 text-slate-600 hover:text-slate-900">
+                    <i class="fa-solid fa-columns"></i>
+                    <span>Kanban doska</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- 📋 JADVAL KO'RINISHI (TABLE VIEW) -->
+        <div id="tableView" class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden mb-6">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse text-xs">
+                    <thead>
+                        <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[11px]">
+                            <th class="py-3.5 px-3 w-14">#ID</th>
+                            <th class="py-3.5 px-4 min-w-[200px]">Talaba (F.I.SH)</th>
+                            <th class="py-3.5 px-4 min-w-[170px]">Telefon</th>
+                            <th class="py-3.5 px-4 min-w-[170px]">Yo'nalish / Kurs</th>
+                            <th class="py-3.5 px-4 min-w-[180px]">Daraja & Vaqt</th>
+                            <th class="py-3.5 px-4 min-w-[170px]">Status (Holati)</th>
+                            <th class="py-3.5 px-4 min-w-[130px]">Sana</th>
+                            <th class="py-3.5 px-3 w-28 text-center">Amallar</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 text-slate-700">
+                        {% for lead in all_leads %}
+                        <tr class="hover:bg-indigo-50/40 transition group" id="table_row_{{ lead.id }}">
+                            <td class="py-3.5 px-3 font-mono font-bold text-slate-400">#{{ lead.id }}</td>
+                            <td class="py-3.5 px-4">
+                                <div class="flex items-center space-x-2.5">
+                                    <div class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 font-black flex items-center justify-center shrink-0 uppercase text-xs">
+                                        {{ lead.full_name[:1] if lead.full_name else '?' }}
+                                    </div>
+                                    <div>
+                                        <button onclick="openLeadDetailModal({{ lead.id }})" class="font-bold text-slate-900 hover:text-indigo-600 text-xs sm:text-sm text-left leading-tight block">
+                                            {{ lead.full_name }}
+                                        </button>
+                                        <span class="text-[10px] text-slate-400 flex items-center mt-0.5">
+                                            <i class="fa-brands fa-instagram text-rose-500 mr-1"></i>
+                                            {{ lead.ad_name or lead.source }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="py-3.5 px-4">
+                                <div class="flex items-center space-x-2">
+                                    <span class="font-mono font-bold text-slate-800 text-xs">{{ lead.phone }}</span>
+                                    <a href="tel:{{ lead.phone }}" title="Qo'ng'iroq qilish" class="w-6 h-6 rounded-md bg-emerald-100 text-emerald-700 hover:bg-emerald-200 flex items-center justify-center text-[10px] transition">
+                                        <i class="fa-solid fa-phone"></i>
+                                    </a>
+                                    <a href="https://t.me/+{{ lead.phone | replace('+', '') | replace(' ', '') | replace('-', '') }}" target="_blank" title="Telegramda yozish" class="w-6 h-6 rounded-md bg-sky-100 text-sky-700 hover:bg-sky-200 flex items-center justify-center text-[10px] transition">
+                                        <i class="fa-brands fa-telegram"></i>
+                                    </a>
+                                </div>
+                            </td>
+                            <td class="py-3.5 px-4">
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-100">
+                                    {{ lead.course or 'Nemis tili' }}
+                                </span>
+                            </td>
+                            <td class="py-3.5 px-4">
+                                <div class="flex flex-wrap gap-1 items-center">
+                                    {% if lead.parsed_daraja %}
+                                        <span class="px-2 py-0.5 bg-amber-50 text-amber-800 border border-amber-200/60 rounded text-[10px] font-bold">
+                                            📊 {{ lead.parsed_daraja }}
+                                        </span>
+                                    {% endif %}
+                                    {% if lead.parsed_vaqt %}
+                                        <span class="px-2 py-0.5 bg-blue-50 text-blue-800 border border-blue-200/60 rounded text-[10px] font-bold">
+                                            ⏰ {{ lead.parsed_vaqt }}
+                                        </span>
+                                    {% endif %}
+                                    {% if not lead.parsed_daraja and not lead.parsed_vaqt and lead.notes %}
+                                        <span class="text-[10px] text-slate-500 italic truncate max-w-[150px]" title="{{ lead.notes }}">
+                                            {{ lead.notes }}
+                                        </span>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td class="py-3.5 px-4">
+                                <select onchange="updateStatus({{ lead.id }}, this.value)" class="text-xs bg-slate-50 hover:bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer">
+                                    <option value="NEW" {% if lead.status == 'NEW' %}selected{% endif %}>🟢 Yangi lid</option>
+                                    <option value="CONTACTED" {% if lead.status == 'CONTACTED' %}selected{% endif %}>🟡 Bog'lanildi</option>
+                                    <option value="CONFIRMED" {% if lead.status == 'CONFIRMED' %}selected{% endif %}>🔵 Tasdiqlandi</option>
+                                    <option value="TRIAL_SCHEDULED" {% if lead.status == 'TRIAL_SCHEDULED' %}selected{% endif %}>🟣 Sinov darsi</option>
+                                    <option value="PAID" {% if lead.status == 'PAID' %}selected{% endif %}>✅ To'lov qildi</option>
+                                    <option value="CANCELLED" {% if lead.status == 'CANCELLED' %}selected{% endif %}>❌ Rad etdi</option>
+                                </select>
+                            </td>
+                            <td class="py-3.5 px-4 text-slate-500 text-[11px] font-mono">
+                                {{ lead.created_at[:16] if lead.created_at else '' }}
+                            </td>
+                            <td class="py-3.5 px-3 text-center">
+                                <div class="flex items-center justify-center space-x-1">
+                                    <button onclick="openLeadDetailModal({{ lead.id }})" title="Batafsil ko'rish" class="p-1.5 text-slate-400 hover:text-indigo-600 rounded-lg hover:bg-slate-100 transition">
+                                        <i class="fa-solid fa-eye"></i>
+                                    </button>
+                                    <button onclick="deleteLead({{ lead.id }}, event)" title="O'chirish" class="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition">
+                                        <i class="fa-regular fa-trash-can"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="8" class="py-12 text-center text-slate-400">
+                                <i class="fa-solid fa-inbox text-3xl mb-2 block text-slate-300"></i>
+                                <p class="text-sm font-semibold">Hozircha lidlar mavjud emas</p>
+                                <p class="text-xs text-slate-400 mt-1">Target reklama havolasini tarqating yoki yuqoridagi "Test Lid" tugmasini bosing</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 📊 KANBAN DOSKA (KANBAN BOARD: 6 COLUMNS) -->
+        <div id="kanbanView" class="hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 mb-6">
 
             <!-- Column 1: Yangi Lidlar -->
             <div class="bg-slate-200/70 p-3 rounded-xl kanban-col flex flex-col">
@@ -253,7 +384,7 @@
                 </div>
             </div>
 
-            <!-- Column 3: Sinov darsi -->
+            <!-- Column 4: Sinov darsi -->
             <div class="bg-slate-200/70 p-3 rounded-xl kanban-col flex flex-col">
                 <div class="flex items-center justify-between mb-3 px-1">
                     <h3 class="font-bold text-slate-700 text-sm flex items-center">
@@ -271,7 +402,7 @@
                 </div>
             </div>
 
-            <!-- Column 4: To'lov qildi -->
+            <!-- Column 5: To'lov qildi -->
             <div class="bg-slate-200/70 p-3 rounded-xl kanban-col flex flex-col">
                 <div class="flex items-center justify-between mb-3 px-1">
                     <h3 class="font-bold text-slate-700 text-sm flex items-center">
@@ -289,7 +420,7 @@
                 </div>
             </div>
 
-            <!-- Column 5: Rad etdi -->
+            <!-- Column 6: Rad etdi -->
             <div class="bg-slate-200/70 p-3 rounded-xl kanban-col flex flex-col">
                 <div class="flex items-center justify-between mb-3 px-1">
                     <h3 class="font-bold text-slate-700 text-sm flex items-center">
@@ -709,6 +840,52 @@
             document.getElementById('settingsModal').classList.add('hidden');
         }
 
+        function switchView(mode) {
+            const tableView = document.getElementById('tableView');
+            const kanbanView = document.getElementById('kanbanView');
+            const btnTable = document.getElementById('viewBtnTable');
+            const btnKanban = document.getElementById('viewBtnKanban');
+
+            if (mode === 'kanban') {
+                tableView.classList.add('hidden');
+                kanbanView.classList.remove('hidden');
+                btnKanban.className = 'px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 bg-white text-indigo-700 shadow-sm';
+                btnTable.className = 'px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 text-slate-600 hover:text-slate-900';
+                localStorage.setItem('crm_view_mode', 'kanban');
+            } else {
+                kanbanView.classList.add('hidden');
+                tableView.classList.remove('hidden');
+                btnTable.className = 'px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 bg-white text-indigo-700 shadow-sm';
+                btnKanban.className = 'px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 text-slate-600 hover:text-slate-900';
+                localStorage.setItem('crm_view_mode', 'table');
+            }
+        }
+
+        async function deleteLead(leadId, e) {
+            if (e) e.stopPropagation();
+            if (!confirm(`Haqiqatan ham #${leadId} raqamli lidni o'chirmoqchimisiz?`)) {
+                return;
+            }
+            try {
+                const res = await fetch(`/api/leads/${leadId}`, { method: 'DELETE' });
+                if (res.ok) {
+                    const row = document.getElementById(`table_row_${leadId}`);
+                    if (row) row.remove();
+                    const card = document.getElementById(`lead_card_${leadId}`);
+                    if (card) card.remove();
+                    const countBadge = document.getElementById('leadsCountBadge');
+                    if (countBadge) {
+                        const current = parseInt(countBadge.textContent) || 1;
+                        countBadge.textContent = Math.max(0, current - 1);
+                    }
+                } else {
+                    alert("Lidni o'chirishda xatolik yuz berdi!");
+                }
+            } catch (err) {
+                alert("Server bilan aloqa uzildi!");
+            }
+        }
+
         async function saveSettings(e) {
             e.preventDefault();
             const btn = document.getElementById('btnSaveSettings');
@@ -721,6 +898,9 @@
                 telegram_channel_url: document.getElementById('setting_channel_url').value.trim()
             };
 
+            const alertBox = document.getElementById('settingsAlert');
+            alertBox.classList.add('hidden');
+
             try {
                 const res = await fetch('/api/settings', {
                     method: 'POST',
@@ -728,13 +908,20 @@
                     body: JSON.stringify(payload)
                 });
                 const data = await res.json();
-                const alertBox = document.getElementById('settingsAlert');
-                alertBox.className = 'p-3 rounded-xl text-xs bg-emerald-50 text-emerald-800 border border-emerald-200';
-                alertBox.textContent = '✅ ' + (data.message || 'Muvaffaqiyatli saqlandi!');
-                alertBox.classList.remove('hidden');
-                setTimeout(() => location.reload(), 1500);
+                if (res.ok) {
+                    alertBox.className = 'p-3 rounded-xl text-xs bg-emerald-50 text-emerald-800 border border-emerald-200';
+                    alertBox.textContent = '✅ ' + (data.message || 'Muvaffaqiyatli saqlandi!');
+                    alertBox.classList.remove('hidden');
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    alertBox.className = 'p-3 rounded-xl text-xs bg-rose-50 text-rose-800 border border-rose-200';
+                    alertBox.textContent = '❌ ' + (data.detail || 'Sozlamalarni saqlashda xatolik yuz berdi!');
+                    alertBox.classList.remove('hidden');
+                }
             } catch(e) {
-                alert("Sozlamalarni saqlashda xatolik yuz berdi!");
+                alertBox.className = 'p-3 rounded-xl text-xs bg-rose-50 text-rose-800 border border-rose-200';
+                alertBox.textContent = "❌ Server bilan aloqa uzildi: " + e.message;
+                alertBox.classList.remove('hidden');
             } finally {
                 btn.disabled = false;
                 btn.textContent = 'Saqlash';
@@ -769,6 +956,8 @@
 
         // Initialize on load
         window.addEventListener('DOMContentLoaded', () => {
+            const savedView = localStorage.getItem('crm_view_mode') || 'table';
+            switchView(savedView);
             updateGeneratedLink();
             setupLiveEvents();
         });

@@ -1,3 +1,4 @@
+import os
 import asyncio
 import io
 import json
@@ -24,6 +25,38 @@ logger = logging.getLogger("studentbot")
 # SSE Subscribers
 subscribers: Set[asyncio.Queue] = set()
 
+def enrich_lead(lead: dict) -> dict:
+    item = dict(lead)
+    notes_str = item.get("notes") or ""
+    # Extract Daraja / Level
+    daraja = ""
+    if "Daraja:" in notes_str:
+        try:
+            part = notes_str.split("Daraja:")[1].split("|")[0].strip()
+            daraja = part
+        except Exception:
+            pass
+
+    # Extract Qulay vaqt / Time
+    vaqt = ""
+    if "Qulay vaqt:" in notes_str:
+        try:
+            part = notes_str.split("Qulay vaqt:")[1].split("|")[0].split("\n")[0].strip()
+            vaqt = part
+        except Exception:
+            pass
+
+    # Clean notes (remove redundant template boilerplate)
+    clean_notes = notes_str
+    for fragment in ["Format: Markazda (Offline)", "Format: Markazda"]:
+        clean_notes = clean_notes.replace(fragment, "")
+    clean_notes = clean_notes.replace("||", "|").strip(" |").strip()
+
+    item["parsed_daraja"] = daraja
+    item["parsed_vaqt"] = vaqt
+    item["clean_notes"] = clean_notes
+    return item
+
 async def broadcast_event(event_type: str, data: dict):
     msg = json.dumps({"type": event_type, "data": data})
     for queue in list(subscribers):
@@ -41,6 +74,29 @@ async def lifespan(app: FastAPI):
     # 1. Initialize SQLite Database
     database.init_db()
     logger.info("Database muvaffaqiyatli ishga tushdi.")
+
+    # Load persistent settings from SQLite (takes precedence over .env file)
+    db_token = database.get_setting("BOT_TOKEN")
+    if db_token:
+        settings.BOT_TOKEN = db_token
+    elif settings.BOT_TOKEN:
+        database.set_setting("BOT_TOKEN", settings.BOT_TOKEN)
+
+    db_group = database.get_setting("TELEGRAM_GROUP_ID")
+    if db_group:
+        settings.TELEGRAM_GROUP_ID = db_group
+    elif settings.TELEGRAM_GROUP_ID:
+        database.set_setting("TELEGRAM_GROUP_ID", settings.TELEGRAM_GROUP_ID)
+
+    db_channel = database.get_setting("TELEGRAM_CHANNEL_URL")
+    if db_channel:
+        settings.TELEGRAM_CHANNEL_URL = db_channel
+    elif settings.TELEGRAM_CHANNEL_URL:
+        database.set_setting("TELEGRAM_CHANNEL_URL", settings.TELEGRAM_CHANNEL_URL)
+
+    # Initialize bot if token is present
+    if settings.BOT_TOKEN and (not bot.bot or bot.bot.token != settings.BOT_TOKEN):
+        bot.init_bot(token=settings.BOT_TOKEN)
 
     # 2. Start Telegram Bot polling if token provided
     if bot.bot and bot.dp and settings.BOT_TOKEN:
@@ -107,7 +163,8 @@ async def public_lead_form(
 @app.get("/", response_class=HTMLResponse)
 async def web_dashboard(request: Request, search: Optional[str] = None):
     stats = database.get_lead_stats()
-    all_leads = database.get_all_leads(search=search, limit=200)
+    raw_leads = database.get_all_leads(search=search, limit=300)
+    enriched_leads = [enrich_lead(lead) for lead in raw_leads]
 
     # Group leads by status for Kanban columns
     leads_by_status = {
@@ -118,7 +175,7 @@ async def web_dashboard(request: Request, search: Optional[str] = None):
         "PAID": [],
         "CANCELLED": []
     }
-    for lead in all_leads:
+    for lead in enriched_leads:
         st = lead["status"]
         if st in leads_by_status:
             leads_by_status[st].append(lead)
@@ -131,6 +188,7 @@ async def web_dashboard(request: Request, search: Optional[str] = None):
         context={
             "stats": stats,
             "leads_by_status": leads_by_status,
+            "all_leads": enriched_leads,
             "search": search,
             "bot_active": bool(bot.bot and settings.BOT_TOKEN and settings.TELEGRAM_GROUP_ID)
         }
@@ -265,67 +323,145 @@ async def update_status(lead_id: int, payload: models.LeadUpdateStatus):
 
     return updated
 
+@app.delete("/api/leads/{lead_id}")
+async def delete_lead(lead_id: int):
+    success = database.delete_lead(lead_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Lid topilmadi")
+    await broadcast_event("LEAD_DELETED", {"id": lead_id})
+    return {"status": "ok", "message": "Lid o'chirildi"}
+
 # ==========================================
 # SETTINGS: BOT & GROUP CONFIGURATION IN CRM
 # ==========================================
 @app.get("/api/settings")
 async def get_settings():
     return {
-        "bot_token": settings.BOT_TOKEN or "",
-        "telegram_group_id": settings.TELEGRAM_GROUP_ID or "",
-        "telegram_channel_url": settings.TELEGRAM_CHANNEL_URL or ""
+        "bot_token": database.get_setting("BOT_TOKEN", settings.BOT_TOKEN or ""),
+        "telegram_group_id": database.get_setting("TELEGRAM_GROUP_ID", settings.TELEGRAM_GROUP_ID or ""),
+        "telegram_channel_url": database.get_setting("TELEGRAM_CHANNEL_URL", settings.TELEGRAM_CHANNEL_URL or "")
     }
 
 @app.post("/api/settings")
 async def save_settings(payload: dict):
+    global polling_task
     new_token = payload.get("bot_token", "").strip()
     new_group = payload.get("telegram_group_id", "").strip()
     new_channel = payload.get("telegram_channel_url", "").strip()
 
+    # 1. Persist directly to SQLite database
+    database.set_setting("BOT_TOKEN", new_token)
+    database.set_setting("TELEGRAM_GROUP_ID", new_group)
+    database.set_setting("TELEGRAM_CHANNEL_URL", new_channel)
+
+    # 2. Update runtime memory settings
     settings.BOT_TOKEN = new_token
     settings.TELEGRAM_GROUP_ID = new_group
-    if new_channel:
-        settings.TELEGRAM_CHANNEL_URL = new_channel
+    settings.TELEGRAM_CHANNEL_URL = new_channel
 
-    # Write to .env
-    env_dict = {}
-    if os.path.exists(".env"):
-        with open(".env", "r", encoding="utf-8") as f:
-            for line in f:
-                line_s = line.strip()
-                if line_s and not line_s.startswith("#") and "=" in line_s:
-                    k, v = line_s.split("=", 1)
-                    env_dict[k.strip()] = v.strip()
+    # 3. Best-effort update of .env file (safely ignore permission/bind-mount errors)
+    try:
+        env_dict = {}
+        if os.path.exists(".env"):
+            with open(".env", "r", encoding="utf-8") as f:
+                for line in f:
+                    line_s = line.strip()
+                    if line_s and not line_s.startswith("#") and "=" in line_s:
+                        k, v = line_s.split("=", 1)
+                        env_dict[k.strip()] = v.strip()
 
-    env_dict["BOT_TOKEN"] = new_token
-    env_dict["TELEGRAM_GROUP_ID"] = new_group
-    if new_channel:
-        env_dict["TELEGRAM_CHANNEL_URL"] = new_channel
+        env_dict["BOT_TOKEN"] = new_token
+        env_dict["TELEGRAM_GROUP_ID"] = new_group
+        if new_channel:
+            env_dict["TELEGRAM_CHANNEL_URL"] = new_channel
 
-    with open(".env", "w", encoding="utf-8") as f:
-        f.write("# Start Education - Deutsch Mit Nurxo'ja Target CRM\n")
-        for k, v in env_dict.items():
-            f.write(f"{k}={v}\n")
+        with open(".env", "w", encoding="utf-8") as f:
+            f.write("# Start Education - Deutsch Mit Nurxo'ja Target CRM\n")
+            for k, v in env_dict.items():
+                f.write(f"{k}={v}\n")
+        logger.info(".env fayli muvaffaqiyatli yangilandi.")
+    except Exception as e:
+        logger.warning(f".env faylini yozishda ogohlantirish (bazada xavfsiz saqlandi): {e}")
 
-    # Reinitialize bot
-    bot.init_bot(token=new_token)
+    # 4. Gracefully restart Telegram Bot instance
+    try:
+        if polling_task and not polling_task.done():
+            polling_task.cancel()
+            try:
+                await polling_task
+            except asyncio.CancelledError:
+                pass
+            polling_task = None
 
-    return {"status": "ok", "message": "Sozlamalar saqlandi va Telegram Bot ulandi!"}
+        if bot.bot:
+            try:
+                await bot.bot.session.close()
+            except Exception:
+                pass
+
+        bot.init_bot(token=new_token)
+
+        if bot.bot and bot.dp and new_token:
+            await bot.bot.delete_webhook(drop_pending_updates=True)
+            polling_task = asyncio.create_task(bot.dp.start_polling(bot.bot))
+            logger.info("Telegram Bot yangi token bilan muvaffaqiyatli ishga tushdi.")
+    except Exception as be:
+        logger.error(f"Telegram Botni qayta ishga tushirishda xatolik: {be}")
+
+    return {"status": "ok", "message": "Sozlamalar saqlandi va Telegram Bot yangilandi!"}
 
 @app.post("/api/settings/test")
 async def test_telegram_connection():
-    if not bot.bot or not settings.TELEGRAM_GROUP_ID:
-        raise HTTPException(status_code=400, detail="Bot Token yoki Guruh ID kiritilmagan!")
+    token = database.get_setting("BOT_TOKEN", settings.BOT_TOKEN or "").strip()
+    group_id = database.get_setting("TELEGRAM_GROUP_ID", settings.TELEGRAM_GROUP_ID or "").strip()
+
+    if not token:
+        raise HTTPException(status_code=400, detail="Telegram Bot Token kiritilmagan!")
+    if not group_id:
+        raise HTTPException(status_code=400, detail="Telegram Guruh ID kiritilmagan!")
+
+    if not bot.bot or bot.bot.token != token:
+        bot.init_bot(token=token)
+
+    if not bot.bot:
+        raise HTTPException(status_code=400, detail="Telegram Bot obyektini ishga tushirib bo'lmadi")
+
     try:
         me = await bot.bot.get_me()
-        chat_id = settings.TELEGRAM_GROUP_ID.strip()
-        msg = await bot.bot.send_message(
-            chat_id=chat_id,
-            text=f"✅ <b>Telegram aloqasi muvaffaqiyatli tekshirildi!</b>\n\n🤖 <b>Bot:</b> @{me.username} ({me.first_name})\n🏫 <b>Markaz:</b> Start Education (Deutsch Mit Nurxo'ja)",
-            parse_mode="HTML"
-        )
-        return {"status": "ok", "bot_username": me.username, "message_id": msg.message_id}
+        try:
+            msg = await bot.bot.send_message(
+                chat_id=group_id,
+                text=(
+                    f"✅ <b>Telegram aloqasi muvaffaqiyatli tekshirildi!</b>\n\n"
+                    f"🤖 <b>Bot:</b> @{me.username} ({me.first_name})\n"
+                    f"🏫 <b>Markaz:</b> Start Education (Deutsch Mit Nurxo'ja)\n"
+                    f"📊 <b>Tizim:</b> Target CRM tayyor!"
+                ),
+                parse_mode="HTML"
+            )
+            return {"status": "ok", "bot_username": me.username, "message_id": msg.message_id}
+        except Exception as se:
+            new_id = bot.check_and_update_migration(se)
+            if new_id:
+                msg = await bot.bot.send_message(
+                    chat_id=new_id,
+                    text=(
+                        f"✅ <b>Telegram aloqasi muvaffaqiyatli tekshirildi!</b>\n\n"
+                        f"🤖 <b>Bot:</b> @{me.username} ({me.first_name})\n"
+                        f"🏫 <b>Markaz:</b> Start Education (Deutsch Mit Nurxo'ja)\n"
+                        f"🔄 <i>Guruh superguruhga o'tganligi sababli Chat ID yangilandi: {new_id}</i>"
+                    ),
+                    parse_mode="HTML"
+                )
+                return {
+                    "status": "ok",
+                    "bot_username": me.username,
+                    "message_id": msg.message_id,
+                    "migrated_to": new_id
+                }
+            raise se
     except Exception as e:
+        logger.error(f"Telegram aloqani tekshirishda xatolik: {e}")
         raise HTTPException(status_code=400, detail=f"Telegram xatolik: {str(e)}")
 
 @app.get("/api/events")

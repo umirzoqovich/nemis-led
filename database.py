@@ -46,6 +46,15 @@ def init_db():
     )
     """)
 
+    # System settings table (Bot Token, Group ID, etc.)
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS system_settings (
+        key TEXT PRIMARY KEY,
+        value TEXT NOT NULL,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
+
     # Safe Schema Migrations (trial_date, cancel_reason)
     cursor.execute("PRAGMA table_info(leads)")
     existing_cols = [c[1] for c in cursor.fetchall()]
@@ -281,4 +290,44 @@ def get_lead_stats() -> Dict[str, Any]:
         "by_status": status_counts,
         "by_course": course_counts
     }
+
+def get_setting(key: str, default: str = "") -> str:
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT value FROM system_settings WHERE key = ?", (key,))
+    row = cursor.fetchone()
+    conn.close()
+    if row and row["value"] is not None:
+        return str(row["value"])
+    return default
+
+def set_setting(key: str, value: str) -> None:
+    conn = get_connection()
+    cursor = conn.cursor()
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    cursor.execute("""
+        INSERT OR REPLACE INTO system_settings (key, value, updated_at)
+        VALUES (?, ?, ?)
+    """, (key, str(value), now))
+    conn.commit()
+    conn.close()
+
+def get_all_settings() -> Dict[str, str]:
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT key, value FROM system_settings")
+    rows = cursor.fetchall()
+    conn.close()
+    return {r["key"]: r["value"] for r in rows}
+
+def delete_lead(lead_id: int) -> bool:
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM lead_logs WHERE lead_id = ?", (lead_id,))
+    cursor.execute("DELETE FROM leads WHERE id = ?", (lead_id,))
+    deleted = cursor.rowcount > 0
+    conn.commit()
+    conn.close()
+    return deleted
+
 

@@ -86,6 +86,27 @@ def test_all():
     assert res.json()["status"] == "CONFIRMED"
     print("   -> Confirmed Status Update OK!")
 
+    print("11. Testing Settings Save API (POST /api/settings)...")
+    res = client.post("/api/settings", json={
+        "bot_token": "9246988890:AAFgIkwRYMgqEX6ZCSJ3QyEG1Hfa-3ua7bc",
+        "telegram_group_id": "-5359076030",
+        "telegram_channel_url": "https://t.me/start_education"
+    })
+    assert res.status_code == 200
+    assert res.json()["status"] == "ok"
+    # Verify in DB
+    import database
+    assert database.get_setting("BOT_TOKEN") == "9246988890:AAFgIkwRYMgqEX6ZCSJ3QyEG1Hfa-3ua7bc"
+    assert database.get_setting("TELEGRAM_GROUP_ID") == "-5359076030"
+    print("   -> Settings Save in SQLite & Memory OK!")
+
+    print("12. Testing Lead Deletion API (DELETE /api/leads/{id})...")
+    res = client.delete(f"/api/leads/{lead['id']}")
+    assert res.status_code == 200
+    assert res.json()["status"] == "ok"
+    assert database.get_lead_by_id(lead['id']) is None
+    print("   -> Lead Deletion OK!")
+
     print("\n✅ BARCHA TESTLAR MUVAFFAQIYATLI O'TDI!")
 
 if __name__ == "__main__":
