@@ -69,11 +69,14 @@ async def lifespan(app: FastAPI):
     logger.info("Tizim to'xtatildi.")
 
 app = FastAPI(
-    title="O'quv Markaz Target CRM API",
+    title="Deutsch Mit Nurxo'ja Target CRM",
     description="Facebook va Instagram reklamalaridan keluvchi lidlarni qabul qilish va Telegram guruhga yuborish tizimi",
     version="1.0.0",
     lifespan=lifespan
 )
+
+# Static files (logo va rasmlar uchun)
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 templates = Jinja2Templates(directory="templates")
 

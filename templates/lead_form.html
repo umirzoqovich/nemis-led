@@ -3,12 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nemis Tili Kurslariga Qabul — Bepul Sinov Darsi</title>
+    <title>Deutsch Mit Nurxo'ja — Nemis Tili Kurslariga Qabul</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         body {
-            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            background: radial-gradient(circle at top, #1e293b 0%, #0a0f1d 100%);
+        }
+        .gold-border {
+            border: 2px solid #eab308;
+            box-shadow: 0 0 20px rgba(234, 179, 8, 0.25);
         }
     </style>
 </head>
@@ -16,19 +20,34 @@
 
     <div class="max-w-md w-full bg-white rounded-3xl shadow-2xl overflow-hidden p-6 sm:p-8 border border-slate-100">
         
-        <!-- Header: German Flag Accent & Title -->
+        <!-- Header: Official Logo & Title -->
         <div class="text-center mb-6">
-            <div class="inline-flex items-center space-x-1.5 px-3 py-1 bg-amber-50 rounded-full border border-amber-200/60 text-xs font-bold text-slate-800 mb-3">
-                <span>🇩🇪</span>
-                <span>DEUTSCHZENTRUM</span>
+            <div class="flex justify-center mb-3">
+                <div class="relative">
+                    <img src="/static/logo.jpg" alt="Deutsch Mit Nurxo'ja Logo" 
+                        class="w-24 h-24 sm:w-28 sm:h-28 rounded-full object-cover gold-border">
+                    <span class="absolute bottom-0 right-0 bg-amber-500 text-slate-950 text-[10px] font-black px-2 py-0.5 rounded-full border-2 border-white shadow">
+                        🇩🇪 DE
+                    </span>
+                </div>
+            </div>
+
+            <div class="inline-flex items-center space-x-1.5 px-3 py-1 bg-amber-50 rounded-full border border-amber-200/80 text-[11px] font-black text-amber-800 tracking-wide uppercase mb-2">
+                <span>Nemis Tili Markazi</span>
             </div>
             
             <h1 class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight leading-tight">
-                Nemis Tilini Noldan B2 Gacha O'rganing!
+                Deutsch Mit Nurxo'ja
             </h1>
             <p class="text-xs sm:text-sm text-slate-500 mt-2">
                 Germaniyaga <b>Ausbildung</b>, <b>Ish</b> yoki <b>Universitetga</b> ketish uchun bepul maslahat va sinov darsiga yoziling.
             </p>
+
+            <!-- Offline Education Notice -->
+            <div class="mt-3.5 inline-flex items-center space-x-2 px-3 py-1.5 bg-slate-900 text-amber-400 rounded-xl text-xs font-semibold shadow-sm">
+                <i class="fa-solid fa-location-dot text-amber-400 text-xs"></i>
+                <span>Ta'lim faqat <b>o'quv markazimizda (Offline)</b> olib boriladi</span>
+            </div>
         </div>
 
         <!-- Lead Form -->
@@ -70,29 +89,17 @@
                 </select>
             </div>
 
-            <!-- Hozirgi darajasi va Format -->
-            <div class="grid grid-cols-2 gap-3">
-                <div>
-                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                        Darajangiz
-                    </label>
-                    <select id="level" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-amber-500">
-                        <option value="Noldan (Bilmayman)">Noldan (Bilmayman)</option>
-                        <option value="A1 boshlang'ich">A1 boshlaganman</option>
-                        <option value="A2 o'rganganman">A2 darajadaman</option>
-                        <option value="B1 o'rganganman">B1 darajadaman</option>
-                    </select>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                        Ta'lim formati
-                    </label>
-                    <select id="format" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-amber-500">
-                        <option value="Markazda (Offline)">🏢 Markazda (Offline)</option>
-                        <option value="Online (Zoom)">💻 Online (Zoom)</option>
-                    </select>
-                </div>
+            <!-- Hozirgi darajasi -->
+            <div>
+                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                    <i class="fa-solid fa-layer-group text-amber-500 mr-1"></i> Hozirgi nemis tili darajangiz *
+                </label>
+                <select id="level" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 transition">
+                    <option value="Noldan (Bilmayman)">Noldan (Umuman bilmayman)</option>
+                    <option value="A1 boshlang'ich">A1 darajadaman (boshlaganman)</option>
+                    <option value="A2 daraja">A2 darajadaman</option>
+                    <option value="B1 daraja">B1 darajadaman</option>
+                </select>
             </div>
 
             <!-- Qulay vaqt -->
@@ -133,13 +140,14 @@
             </div>
             <h2 class="text-2xl font-black text-slate-900">Arizangiz qabul qilindi! 🎉</h2>
             <p class="text-sm text-slate-600 mt-2">
-                Rahmat! Nemis tili bo'yicha kuratorimiz 10 daqiqa ichida siz bilan bog'lanib, sinov darsi va Germaniya dasturlari bo'yicha to'liq ma'lumot beradi.
+                Rahmat! <b>Deutsch Mit Nurxo'ja</b> markazimiz kuratori 10 daqiqa ichida siz bilan bog'lanib, sinov darsi vaqti haqida batafsil ma'lumot beradi.
             </p>
 
             <div class="mt-5 p-4 bg-slate-50 border border-slate-200 rounded-2xl text-left text-xs text-slate-700 space-y-1.5">
                 <p><b>Ism:</b> <span id="resName"></span></p>
                 <p><b>Yo'nalish:</b> <span id="resCourse"></span></p>
                 <p><b>Telefon:</b> <span id="resPhone"></span></p>
+                <p><b>Ta'lim formati:</b> <span class="font-bold text-amber-700">🏢 Markazda (Offline)</span></p>
             </div>
 
             <!-- Telegram Channel Bonus CTA -->
@@ -170,16 +178,16 @@
             const phone = document.getElementById('phone').value.trim();
             const course = document.getElementById('course').value;
             const level = document.getElementById('level').value;
-            const format = document.getElementById('format').value;
+            const format = "Markazda (Offline)";
             const ref = document.getElementById('ref').value;
 
-            const notesText = `Daraja: ${level} | Format: ${format} | Qulay vaqt: ${selectedTime}`;
+            const notesText = `Daraja: ${level} | Format: Markazda (Offline) | Qulay vaqt: ${selectedTime}`;
 
             const payload = {
                 full_name: fullName,
                 phone: phone,
                 course: course,
-                source: "Instagram Target (Nemis tili)",
+                source: "Instagram Target (Deutsch Mit Nurxo'ja)",
                 ad_name: ref,
                 notes: notesText
             };
@@ -194,7 +202,7 @@
                 if (res.ok) {
                     document.getElementById('leadForm').classList.add('hidden');
                     document.getElementById('resName').textContent = fullName;
-                    document.getElementById('resCourse').textContent = `${course} (${format})`;
+                    document.getElementById('resCourse').textContent = course;
                     document.getElementById('resPhone').textContent = phone;
                     document.getElementById('successScreen').classList.remove('hidden');
                 } else {

@@ -8,3 +8,4 @@ services:
     volumes:
       - ./crm_leads.db:/app/crm_leads.db
       - ./.env:/app/.env
+

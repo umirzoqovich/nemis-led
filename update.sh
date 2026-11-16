@@ -23,3 +23,4 @@ if command -v docker &> /dev/null && docker compose ps &> /dev/null; then
     docker compose up -d --build
     echo "✅ Docker qayta ishga tushdi!"
 fi
+

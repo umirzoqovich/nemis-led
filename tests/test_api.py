@@ -66,6 +66,12 @@ def test_all():
     assert len(timeline) >= 1
     print("   -> Lead Notes & Timeline OK!")
 
+    print("8. Testing Static Logo (GET /static/logo.jpg)...")
+    res = client.get("/static/logo.jpg")
+    assert res.status_code == 200
+    assert len(res.content) > 10000
+    print("   -> Static Logo OK!")
+
     print("\n✅ BARCHA TESTLAR MUVAFFAQIYATLI O'TDI!")
 
 if __name__ == "__main__":

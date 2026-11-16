@@ -29,14 +29,12 @@
     <header class="bg-indigo-700 text-white shadow-lg sticky top-0 z-40">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex justify-between items-center">
             <div class="flex items-center space-x-3">
-                <div class="bg-white/20 p-2.5 rounded-xl">
-                    <i class="fa-solid fa-bullseye text-2xl text-yellow-300"></i>
-                </div>
+                <img src="/static/logo.jpg" alt="Deutsch Mit Nurxo'ja Logo" class="w-11 h-11 rounded-full object-cover border-2 border-amber-400 shadow-md">
                 <div>
-                    <h1 class="text-xl font-bold tracking-tight flex items-center space-x-1.5">
-                        <span>🇩🇪 DeutschZentrum CRM</span>
+                    <h1 class="text-xl font-black tracking-tight flex items-center space-x-1.5">
+                        <span>Deutsch Mit Nurxo'ja</span>
                     </h1>
-                    <p class="text-xs text-indigo-200">Nemis Tili (Ausbildung, B1/B2, Ish va O'qish) Target Menejeri</p>
+                    <p class="text-xs text-indigo-200">Nemis Tili Markazi — Target Lead CRM</p>
                 </div>
             </div>
 
@@ -383,9 +381,9 @@
         async function sendQuickTestLead() {
             const germanLeads = [
                 { name: "Sardorbek Rahimov", course: "Ausbildung (Germaniya)", note: "Daraja: Noldan | Format: Markazda (Offline) | Maqsad: Germaniyada IT kasb-hunar" },
-                { name: "Mohira Ergasheva", course: "Shifokor va Hamshiralar (Meditsina)", note: "Daraja: A1 boshlaganman | Format: Online (Zoom) | Maqsad: Germaniyada hamshiralik" },
+                { name: "Mohira Ergasheva", course: "Shifokor va Hamshiralar (Meditsina)", note: "Daraja: A1 boshlaganman | Format: Markazda (Offline) | Maqsad: Germaniyada hamshiralik" },
                 { name: "Doniyor Qosimov", course: "Nemis tili B2 (Universitet/Ish)", note: "Daraja: B1 o'rganganman | Format: Markazda (Offline) | Maqsad: Magistratura" },
-                { name: "Nilufar Karimova", course: "A1 Viza (Oila birlashtirish)", note: "Daraja: Noldan | Format: Online (Zoom) | Maqsad: Turmush o'rtog'i Germaniyada" },
+                { name: "Nilufar Karimova", course: "A1 Viza (Oila birlashtirish)", note: "Daraja: Noldan | Format: Markazda (Offline) | Maqsad: Turmush o'rtog'i Germaniyada" },
                 { name: "Bekzod Aliyev", course: "Nemis tili A1 (Noldan)", note: "Daraja: Noldan | Format: Markazda (Offline) | Maqsad: Umumiy nemis tili" }
             ];
             const randomItem = germanLeads[Math.floor(Math.random() * germanLeads.length)];

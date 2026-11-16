@@ -60,3 +60,4 @@ Ushbu qo'llanma Instagram va Facebook target reklamalaridan kelgan nemis tili li
 - **Sinov darsi:** Aniq sana va vaqt belgilandi (CRM ga sana kiritiladi).
 - **To'lov qildi:** O'quvchi guruhga biriktirildi.
 - **Rad etdi:** Sababi aniq ko'rsatiladi (Masalan: *Narxi qimmat, Uzoq, Vaqt to'g'ri kelmadi*).
+

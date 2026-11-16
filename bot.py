@@ -110,7 +110,7 @@ if dp:
         user_name = message.from_user.full_name
         text = (
             f"Assalomu alaykum, {user_name}!\n\n"
-            f"🇩🇪 <b>DeutschZentrum — Nemis Tili Target CRM Boti!</b>\n\n"
+            f"🇩🇪 <b>Deutsch Mit Nurxo'ja — Nemis Tili Target CRM Boti!</b>\n\n"
             f"Ushbu bot Instagram va Facebook target reklamalaridan kelgan har bir lidni "
             f"darhol ushbu guruhga yetkazadi.\n\n"
             f"📌 <b>Mavjud buyruqlar:</b>\n"
